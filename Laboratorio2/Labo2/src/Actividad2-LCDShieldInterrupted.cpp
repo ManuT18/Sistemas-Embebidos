@@ -29,6 +29,7 @@ char msgs[5][17] =
     " Select Key: OK "
 };
 
+
 uint16_t get_key(unsigned int input);
 void ADC_init(void);
 ISR(ADC_vect);
@@ -136,10 +137,12 @@ ISR(ADC_vect) {
     // Si hay cambio de estado
     if (tecla != oldkey) {
         if (tecla != -1 && key_down_handler) {
-            fnqueue_add([=](){ key_down_handler(tecla); });
+            int tecla_copy = tecla;
+            fnqueue_add([=](){ key_down_handler(tecla_copy); });
         }
         if (oldkey != -1 && key_up_handler) {
-            fnqueue_add([=](){ key_up_handler(oldkey); });
+           int oldkey_copy = oldkey;
+           fnqueue_add([=](){ key_up_handler(oldkey_copy); });
         }
         oldkey = tecla;
     }
@@ -148,7 +151,7 @@ ISR(ADC_vect) {
 void onKeyDown(int tecla) {
     lcd.setCursor(0, 1);
     lcd.print("Presionada: ");
-    //lcd.print(tecla);
+    lcd.print(tecla);
 }
 
 void onKeyUp(int tecla) {
