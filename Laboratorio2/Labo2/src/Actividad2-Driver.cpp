@@ -8,10 +8,8 @@
 // Variables globales internas del driver
 uint8_t NUM_KEYS = 5;
 uint16_t adc_key_val[5] = {30, 150, 360, 535, 760};
+LiquidCrystal lcdDriver(8, 9, 4, 5, 6, 7);
 
-
-//static void (*key_down_handler)(int tecla) = 0;
-//static void (*key_up_handler)(int tecla) = 0;
 static int last_key = -1;
 volatile uint16_t adc_value = 0;
 
@@ -25,7 +23,6 @@ void key_event_handler();
 int get_key(uint16_t adc_value);
 void ADC_init(void);
 ISR(ADC_vect);
-// void handler();
 
 // Registrar handlers
 void key_down_callback(void (*handler)(int tecla))
@@ -82,19 +79,9 @@ int get_key(uint16_t adc_value)
 ISR(ADC_vect)
 {
 	adc_value = ADC;             // leer valor crudo
+
 	fnqueue_add(key_event_handler);  // encolar el handler
 }
-
-// Funciones para registrar callbacks
-// void key_down_callback(void (*handler)(int tecla))
-// {
-// 	key_down_handler = handler;
-// }
-
-// void key_up_callback(void (*handler)(int tecla))
-// {
-// 	key_up_handler = handler;
-// }
 
 void key_event_handler()
 {
@@ -105,7 +92,7 @@ void key_event_handler()
 	if (tecla != last_key)
 	{
 		if (tecla != -1)
-        {
+          {
 			for (int i = 0; i < num_key_down; i++)
 			{
 				key_down_handlers[i](tecla); // ejecuta todos los handlers registrados

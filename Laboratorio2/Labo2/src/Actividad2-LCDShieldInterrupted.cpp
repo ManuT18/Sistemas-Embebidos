@@ -26,8 +26,11 @@ void setup()
 {
     lcd.begin(16,2);
     analogWrite(10, 200); // Controla intensidad backlight
-    lcd.print("ADC con ISR");
+
+    delay(1000);
+    lcd.clear();
     
+    lcd.print("ADC con ISR");
     
     byte customChar[8] = {
         B01110,
@@ -38,7 +41,7 @@ void setup()
         B01010,
         B00100,
         B01010
-      };
+    };
           
     lcd.createChar(0, customChar);
     lcd.setCursor(0, 1);
@@ -65,24 +68,6 @@ void loop()
 {
     // Ejecuta funciones encoladas
     fnqueue_run();
-
-    // for (int i = 0; i < 255 ; i++) {
-    //     analogWrite(10, i);
-    //     delay(10);
-    // }
-    // lcd.setCursor(0, 1);      //line=1, x=0
-    // lcd.print("ciclando");
-    // delay(300);
-    // lcd.setCursor(8, 1);      //line=1, x=8
-    // lcd.print(".");
-    // delay(300);
-    // lcd.setCursor(9, 1);      //line=1, x=9
-    // lcd.print(".");
-    // delay(300);
-    // lcd.setCursor(10, 1);      //line=1, x=10
-    // lcd.print(".");
-    // delay(300);
-    // lcd.clear();
 }
 
 void onKeyDown(int tecla) {
