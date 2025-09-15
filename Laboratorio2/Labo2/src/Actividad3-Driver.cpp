@@ -4,11 +4,11 @@
 #include <LiquidCrystal.h>
 #include "fnqueue.h"
 #include "critical.h"
+#include "Cronometro.h"
 
 // Variables globales internas del driver
 uint8_t NUM_KEYS = 5;
 uint16_t adc_key_val[5] = {30, 150, 360, 535, 760};
-LiquidCrystal lcdDriver(8, 9, 4, 5, 6, 7);
 
 static int last_key = -1;
 volatile uint16_t adc_value = 0;
@@ -23,6 +23,7 @@ void key_event_handler();
 int get_key(uint16_t adc_value);
 void ADC_init(void);
 ISR(ADC_vect);
+ISR(TIMER1_COMPA_vect);
 
 // Registrar handlers
 void key_down_callback(void (*handler)(int tecla))
@@ -63,6 +64,39 @@ void ADC_init(void)
 	ADCSRA |= (1 << ADSC);
 }
 
+void TIMER_init(void)
+{
+	// Configurar Timer1 para que genere una interrupción cada 100ms
+
+	// Limpia cualquier configuración previa de los registros Timer Counter Control Register 1 A y B
+	// El registro A controla aspectos como el modo de onda y las salidas de comparación
+	// El registro B controla el prescaler, modo de generación de ondas y fuente de reloj
+    	TCCR1A = 0;
+    	TCCR1B = 0;
+
+	// Asigna el valor de comparación de 1562 = 15624/10 al registro Out Compare Register 1 A
+	// El valor 15624 se obtiene de la fórmula:
+	// { 16MHz / 1024 (prescaler) / 1Hz (frecuencia deseada) } - 1 = 1562
+    	OCR1A = 15624/10;
+
+	// Setea el bit WGM12 (Waveform Generation Mode bit 12) en TCCR1B para configurar el Timer1 en modo CTC (Clear Timer on Compare Match)
+	// En este modo, el Timer1 se reinicia a 0 cada vez que alcanza el valor en OCR1A (1562)
+	// Esto permite generar interrupciones periódicas con precisión y que el timer no cuente indefinidamente
+    	TCCR1B |= (1 << WGM12);
+
+	// Setea los bits CS12 y CS10 en TCCR1B para seleccionar un prescaler de 1024
+	// El prescaler divide la frecuencia del reloj del sistema (16MHz) para que el Timer1 cuente a una velocidad más manejable
+	// Con un prescaler de 1024, el Timer1 contará a 16MHz/1024 = 15625Hz
+	// Esto significa que el Timer1 incrementará su valor en 1 cada 64 microsegundos
+    	TCCR1B |= (1 << CS12) | (1 << CS10);
+
+	// Setea el bit OCIE1A (Output Compare Match Interrupt Enable) en el registro Timer Interrupt Mask Register 1 (TIMSK1)
+	// Esto habilita la interrupción que se genera cuando el Timer1 alcanza el valor en OCR1A
+	// Cuando esto ocurre, se ejecuta la rutina de servicio de interrupción asociada (ISR(TIMER1_COMPA_vect))
+	// Esta interrupción se utilizará para incrementar el cronómetro cada 100ms
+    	TIMSK1 |= (1 << OCIE1A);
+}
+
 // Función que traduce valor ADC en tecla
 int get_key(uint16_t adc_value)
 {
@@ -82,6 +116,10 @@ ISR(ADC_vect)
 
 	fnqueue_add(key_event_handler);  // encolar el handler
 }
+
+ISR(TIMER1_COMPA_vect) {
+	cronometro.incrementar();
+} 
 
 void key_event_handler()
 {
