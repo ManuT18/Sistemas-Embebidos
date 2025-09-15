@@ -18,22 +18,26 @@ static void (*key_down_handlers[MAX_HANDLERS])(int tecla);
 static void (*key_up_handlers[MAX_HANDLERS])(int tecla);
 static int num_key_down = 0;
 static int num_key_up = 0; 
+static int db = 0; // contador antirrebote
+static int tecla = -1; // tecla actual
 
 void key_event_handler();
 int get_key(uint16_t adc_value);
 void ADC_init(void);
 ISR(ADC_vect);
-ISR(TIMER1_COMPA_vect);
+ISR(TIMER0_COMPA_vect);
 
 // Registrar handlers
 void key_down_callback(void (*handler)(int tecla))
 {
-	key_down_handlers[num_key_down++] = handler;
+	if (num_key_down < MAX_HANDLERS)
+		key_down_handlers[num_key_down++] = handler;
 }
 
 void key_up_callback(void (*handler)(int tecla))
 {
-	key_up_handlers[num_key_up++] = handler;
+	if (num_key_up < MAX_HANDLERS)
+		key_up_handlers[num_key_up++] = handler;
 }
 
 void ADC_init(void)
@@ -66,35 +70,35 @@ void ADC_init(void)
 
 void TIMER_init(void)
 {
-	// Configurar Timer1 para que genere una interrupción cada 100ms
+	// Configurar Timer0 para que genere una interrupción cada 100ms
 
-	// Limpia cualquier configuración previa de los registros Timer Counter Control Register 1 A y B
+	// Limpia cualquier configuración previa de los registros Timer Counter Control Register 0 A y B
 	// El registro A controla aspectos como el modo de onda y las salidas de comparación
 	// El registro B controla el prescaler, modo de generación de ondas y fuente de reloj
-    	TCCR1A = 0;
-    	TCCR1B = 0;
+    	TCCR0A = 0;
+    	TCCR0B = 0;
 
-	// Asigna el valor de comparación de 1562 = 15624/10 al registro Out Compare Register 1 A
+	// Asigna el valor de comparación de 156 = 15624/100 al registro Out Compare Register 0 A
 	// El valor 15624 se obtiene de la fórmula:
-	// { 16MHz / 1024 (prescaler) / 1Hz (frecuencia deseada) } - 1 = 1562
-    	OCR1A = 15624/10;
+	// { 16MHz / 1024 (prescaler) / 1Hz (frecuencia deseada) } - 1 = 15624
+    	OCR0A = 156;
 
-	// Setea el bit WGM12 (Waveform Generation Mode bit 12) en TCCR1B para configurar el Timer1 en modo CTC (Clear Timer on Compare Match)
-	// En este modo, el Timer1 se reinicia a 0 cada vez que alcanza el valor en OCR1A (1562)
+	// Setea el bit WGM01 (Waveform Generation Mode bit 01) en TCCR0A para configurar el Timer0 en modo CTC (Clear Timer on Compare Match)
+	// En este modo, el Timer0 se reinicia a 0 cada vez que alcanza el valor en OCR0A (156)
 	// Esto permite generar interrupciones periódicas con precisión y que el timer no cuente indefinidamente
-    	TCCR1B |= (1 << WGM12);
+    	TCCR0A |= (1 << WGM01);
 
-	// Setea los bits CS12 y CS10 en TCCR1B para seleccionar un prescaler de 1024
-	// El prescaler divide la frecuencia del reloj del sistema (16MHz) para que el Timer1 cuente a una velocidad más manejable
-	// Con un prescaler de 1024, el Timer1 contará a 16MHz/1024 = 15625Hz
-	// Esto significa que el Timer1 incrementará su valor en 1 cada 64 microsegundos
-    	TCCR1B |= (1 << CS12) | (1 << CS10);
+	// Setea los bits CS02 y CS00 en TCCR0B para seleccionar un prescaler de 1024
+	// El prescaler divide la frecuencia del reloj del sistema (16MHz) para que el Timer0 cuente a una velocidad más manejable
+	// Con un prescaler de 1024, el Timer0 contará a 16MHz/1024 = 15625Hz
+	// Esto significa que el Timer0 incrementará su valor en 1 cada 64 microsegundos
+    	TCCR0B |= (1 << CS02) | (1 << CS00);
 
-	// Setea el bit OCIE1A (Output Compare Match Interrupt Enable) en el registro Timer Interrupt Mask Register 1 (TIMSK1)
-	// Esto habilita la interrupción que se genera cuando el Timer1 alcanza el valor en OCR1A
-	// Cuando esto ocurre, se ejecuta la rutina de servicio de interrupción asociada (ISR(TIMER1_COMPA_vect))
+	// Setea el bit OCIE0A (Output Compare Match Interrupt Enable) en el registro Timer Interrupt Mask Register 0 (TIMSK0)
+	// Esto habilita la interrupción que se genera cuando el Timer0 alcanza el valor en OCR0A
+	// Cuando esto ocurre, se ejecuta la rutina de servicio de interrupción asociada (ISR(TIMER0_COMPA_vect))
 	// Esta interrupción se utilizará para incrementar el cronómetro cada 100ms
-    	TIMSK1 |= (1 << OCIE1A);
+    	TIMSK0 |= (1 << OCIE0A);
 }
 
 // Función que traduce valor ADC en tecla
@@ -102,7 +106,7 @@ int get_key(uint16_t adc_value)
 {
 	for (int i = 0; i < NUM_KEYS; i++)
 	{
-		if (adc_value <= adc_key_val[i])
+		if (adc_value < adc_key_val[i])
 		{
 			return i; 
 		}
@@ -117,32 +121,34 @@ ISR(ADC_vect)
 	fnqueue_add(key_event_handler);  // encolar el handler
 }
 
-ISR(TIMER1_COMPA_vect) {
+ISR(TIMER0_COMPA_vect) {
 	cronometro.incrementar();
 } 
 
 void key_event_handler()
 {
-	int tecla = get_key(adc_value);
-
-	delay(50); // debounce
-
-	if (tecla != last_key)
-	{
-		if (tecla != -1)
-          {
-			for (int i = 0; i < num_key_down; i++)
-			{
-				key_down_handlers[i](tecla); // ejecuta todos los handlers registrados
-			}
-		}
-		if (last_key != -1)
+	tecla = get_key(adc_value);
+	
+	db++;
+	if (db >= 200) {
+		db = 0;
+		if (tecla != last_key)
 		{
-			for (int i = 0; i < num_key_up; i++)
-			{
-				key_up_handlers[i](last_key);
+			if (tecla != -1)
+          	{
+				for (int i = 0; i < num_key_down; i++)
+				{
+					key_down_handlers[i](tecla); // ejecuta todos los handlers registrados
+				}
 			}
+			if (last_key != -1)
+			{
+				for (int i = 0; i < num_key_up; i++)
+				{
+					key_up_handlers[i](last_key);
+				}
+			}
+			last_key = tecla;
 		}
-		last_key = tecla;
 	}
 }
