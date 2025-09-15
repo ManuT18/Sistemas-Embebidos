@@ -7,8 +7,7 @@
 
 // Variables globales internas del driver
 uint8_t NUM_KEYS = 5;
-uint16_t adc_key_val[5] = {30, 150, 360, 535, 760};
-LiquidCrystal lcdDriver(8, 9, 4, 5, 6, 7);
+uint16_t adc_key_val[5] = {30, 250, 360, 535, 760};
 
 static int last_key = -1;
 volatile uint16_t adc_value = 0;
@@ -18,6 +17,8 @@ static void (*key_down_handlers[MAX_HANDLERS])(int tecla);
 static void (*key_up_handlers[MAX_HANDLERS])(int tecla);
 static int num_key_down = 0;
 static int num_key_up = 0; 
+static int db = 0; // simple debounce counter
+static int tecla = -1;
 
 void key_event_handler();
 int get_key(uint16_t adc_value);
@@ -27,12 +28,14 @@ ISR(ADC_vect);
 // Registrar handlers
 void key_down_callback(void (*handler)(int tecla))
 {
-	key_down_handlers[num_key_down++] = handler;
+	if (num_key_down < MAX_HANDLERS)
+		key_down_handlers[num_key_down++] = handler;
 }
 
 void key_up_callback(void (*handler)(int tecla))
 {
-	key_up_handlers[num_key_up++] = handler;
+	if (num_key_up < MAX_HANDLERS)
+		key_up_handlers[num_key_up++] = handler;
 }
 
 void ADC_init(void)
@@ -68,7 +71,7 @@ int get_key(uint16_t adc_value)
 {
 	for (int i = 0; i < NUM_KEYS; i++)
 	{
-		if (adc_value <= adc_key_val[i])
+		if (adc_value < adc_key_val[i])
 		{
 			return i; 
 		}
@@ -85,26 +88,28 @@ ISR(ADC_vect)
 
 void key_event_handler()
 {
-	int tecla = get_key(adc_value);
-
-	delay(50); // debounce
-
-	if (tecla != last_key)
-	{
-		if (tecla != -1)
-          {
-			for (int i = 0; i < num_key_down; i++)
-			{
-				key_down_handlers[i](tecla); // ejecuta todos los handlers registrados
-			}
-		}
-		if (last_key != -1)
+	tecla = get_key(adc_value);
+	
+	db++;
+	if (db >= 200) {
+		db = 0;
+		if (tecla != last_key)
 		{
-			for (int i = 0; i < num_key_up; i++)
-			{
-				key_up_handlers[i](last_key);
+			if (tecla != -1)
+          	{
+				for (int i = 0; i < num_key_down; i++)
+				{
+					key_down_handlers[i](tecla); // ejecuta todos los handlers registrados
+				}
 			}
+			if (last_key != -1)
+			{
+				for (int i = 0; i < num_key_up; i++)
+				{
+					key_up_handlers[i](last_key);
+				}
+			}
+			last_key = tecla;
 		}
-		last_key = tecla;
 	}
 }

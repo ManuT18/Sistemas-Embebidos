@@ -11,13 +11,7 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
 
 // Key message
 char msgs[5][17] = 
-{
-    " Right", 
-    " Up", 
-    " Down", 
-    " Left", 
-    " Select"
-};
+{ " Right", " Up", " Down", " Left", " Select" };
 
 void onKeyDown(int tecla);
 void onKeyUp(int tecla);
@@ -29,32 +23,11 @@ void setup()
 
     delay(1000);
     lcd.clear();
-    
-    lcd.print("ADC con ISR");
-    
-    byte customChar[8] = {
-        B01110,
-        B10101,
-        B11111,
-        B01110,
-        B10001,
-        B01010,
-        B00100,
-        B01010
-    };
-          
+    lcd.print("ADC con ISR "); 
+    byte customChar[8] = { B01110, B10101, B11111, B01110, B10001, B01010, B00100, B01010 };
     lcd.createChar(0, customChar);
-    lcd.setCursor(0, 1);
-    lcd.print(" ");
-    lcd.write(byte(0));
-    lcd.print("  ");
-    lcd.write(byte(0));
-    lcd.print("  ");
-    lcd.write(byte(0));
-    lcd.print("  ");
-    lcd.write(byte(0));
-    lcd.print("  ");
-    lcd.write(byte(0));
+    lcd.setCursor(12, 0);
+    lcd.write(byte(0)); 
 
     fnqueue_init();
     ADC_init();
