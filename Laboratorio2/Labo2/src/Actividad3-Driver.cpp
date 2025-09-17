@@ -4,7 +4,6 @@
 #include <LiquidCrystal.h>
 #include "fnqueue.h"
 #include "critical.h"
-#include "Cronometro.h"
 
 // Variables globales internas del driver
 uint8_t NUM_KEYS = 5;
@@ -21,11 +20,25 @@ static int num_key_up = 0;
 static int db = 0; // contador antirrebote
 static int tecla = -1; // tecla actual
 
+
+
+//########################################################################################
+//###																  ###
+//###					DEFINICION DE FUNCIONES							  ###
+//###																  ###
+//########################################################################################
+
+
+
+
 void key_event_handler();
 int get_key(uint16_t adc_value);
 void ADC_init(void);
 ISR(ADC_vect);
 ISR(TIMER0_COMPA_vect);
+void incrementar();
+void TIMER_init(void);
+
 
 // Registrar handlers
 void key_down_callback(void (*handler)(int tecla))
@@ -39,6 +52,16 @@ void key_up_callback(void (*handler)(int tecla))
 	if (num_key_up < MAX_HANDLERS)
 		key_up_handlers[num_key_up++] = handler;
 }
+
+
+
+//########################################################################################
+//###																  ###
+//###					CONFIGURACIONES DEL ADC							  ###
+//###																  ###
+//########################################################################################
+
+
 
 void ADC_init(void)
 {
@@ -67,6 +90,68 @@ void ADC_init(void)
 	// En Free Running, al terminar una conversión ADSC se vuelve a iniciar automáticamente.
 	ADCSRA |= (1 << ADSC);
 }
+
+// Función que traduce valor ADC en tecla
+int get_key(uint16_t adc_value)
+{
+	for (int i = 0; i < NUM_KEYS; i++)
+	{
+		if (adc_value < adc_key_val[i])
+		{
+			return i; 
+		}
+	}
+	return -1; // No key pressed
+}
+
+ISR(ADC_vect)
+{
+	adc_value = ADC;  // leer valor crudo
+
+	fnqueue_add(key_event_handler);  // encolar el handler
+}
+
+void key_event_handler()
+{
+	tecla = get_key(adc_value);
+	
+	db++;
+	if (db >= 200) {
+		db = 0;
+		if (tecla != last_key)
+		{
+			if (tecla != -1)
+          	{
+				for (int i = 0; i < num_key_down; i++)
+				{
+					key_down_handlers[i](tecla); // ejecuta todos los handlers registrados
+				}
+			}
+			if (last_key != -1)
+			{
+				for (int i = 0; i < num_key_up; i++)
+				{
+					key_up_handlers[i](last_key);
+				}
+			}
+			last_key = tecla;
+		}
+	}
+}
+
+
+
+//########################################################################################
+//###																  ###
+//###					CONFIGURACIONES DEL TIMER						  ###
+//###																  ###
+//########################################################################################
+
+
+
+volatile uint32_t contador = 0;  
+volatile uint8_t run = 0;  
+
 
 void TIMER_init(void)
 {
@@ -97,58 +182,19 @@ void TIMER_init(void)
 	// Setea el bit OCIE0A (Output Compare Match Interrupt Enable) en el registro Timer Interrupt Mask Register 0 (TIMSK0)
 	// Esto habilita la interrupción que se genera cuando el Timer0 alcanza el valor en OCR0A
 	// Cuando esto ocurre, se ejecuta la rutina de servicio de interrupción asociada (ISR(TIMER0_COMPA_vect))
-	// Esta interrupción se utilizará para incrementar el cronómetro cada 100ms
+	// Esta interrupción se utilizará para incrementar el cronómetro cada 10ms
     	TIMSK0 |= (1 << OCIE0A);
 }
 
-// Función que traduce valor ADC en tecla
-int get_key(uint16_t adc_value)
+ISR(TIMER0_COMPA_vect) 
 {
-	for (int i = 0; i < NUM_KEYS; i++)
-	{
-		if (adc_value < adc_key_val[i])
-		{
-			return i; 
-		}
-	}
-	return -1; // No key pressed
-}
-
-ISR(ADC_vect)
-{
-	adc_value = ADC;             // leer valor crudo
-
-	fnqueue_add(key_event_handler);  // encolar el handler
-}
-
-ISR(TIMER0_COMPA_vect) {
-	cronometro.incrementar();
+	static uint8_t cuenta = 0;
+    	if (run) {
+        	cuenta++;
+        	if (cuenta >= 10) {   // 10 ms
+            	contador++;
+            	cuenta = 0;
+        	}
+    	}
 } 
 
-void key_event_handler()
-{
-	tecla = get_key(adc_value);
-	
-	db++;
-	if (db >= 200) {
-		db = 0;
-		if (tecla != last_key)
-		{
-			if (tecla != -1)
-          	{
-				for (int i = 0; i < num_key_down; i++)
-				{
-					key_down_handlers[i](tecla); // ejecuta todos los handlers registrados
-				}
-			}
-			if (last_key != -1)
-			{
-				for (int i = 0; i < num_key_up; i++)
-				{
-					key_up_handlers[i](last_key);
-				}
-			}
-			last_key = tecla;
-		}
-	}
-}
