@@ -116,7 +116,7 @@ void key_event_handler()
 	tecla = get_key(adc_value);
 	
 	db++;
-	if (db >= 200) {
+	if (db >= 100) {
 		db = 0;
 		if (tecla != last_key)
 		{
@@ -157,36 +157,36 @@ void TIMER_init(void)
 {
 	// Configurar Timer0 para que genere una interrupción cada 100ms
 
-	// Limpia cualquier configuración previa de los registros Timer Counter Control Register 0 A y B
+	// Limpia cualquier configuración previa de los registros Timer Counter Control Register 2 A y B
 	// El registro A controla aspectos como el modo de onda y las salidas de comparación
 	// El registro B controla el prescaler, modo de generación de ondas y fuente de reloj
-    	TCCR0A = 0;
-    	TCCR0B = 0;
+    	TCCR2A = 0;
+    	TCCR2B = 0;
 
-	// Asigna el valor de comparación de 156 = 15624/100 al registro Out Compare Register 0 A
+	// Asigna el valor de comparación de 156 = 15624/100 al registro Out Compare Register 2 A
 	// El valor 15624 se obtiene de la fórmula:
 	// { 16MHz / 1024 (prescaler) / 1Hz (frecuencia deseada) } - 1 = 15624
-    	OCR0A = 156;
+    	OCR2A = 156;
 
-	// Setea el bit WGM01 (Waveform Generation Mode bit 01) en TCCR0A para configurar el Timer0 en modo CTC (Clear Timer on Compare Match)
-	// En este modo, el Timer0 se reinicia a 0 cada vez que alcanza el valor en OCR0A (156)
+	// Setea el bit WGM21 (Waveform Generation Mode bit 21) en TCCR2A para configurar el Timer2 en modo CTC (Clear Timer on Compare Match)
+	// En este modo, el Timer2 se reinicia a 0 cada vez que alcanza el valor en OCR2A (156)
 	// Esto permite generar interrupciones periódicas con precisión y que el timer no cuente indefinidamente
-    	TCCR0A |= (1 << WGM01);
+    	TCCR2A |= (1 << WGM21);
 
-	// Setea los bits CS02 y CS00 en TCCR0B para seleccionar un prescaler de 1024
-	// El prescaler divide la frecuencia del reloj del sistema (16MHz) para que el Timer0 cuente a una velocidad más manejable
-	// Con un prescaler de 1024, el Timer0 contará a 16MHz/1024 = 15625Hz
-	// Esto significa que el Timer0 incrementará su valor en 1 cada 64 microsegundos
-    	TCCR0B |= (1 << CS02) | (1 << CS00);
+	// Setea los bits CS22 y CS20 en TCCR2B para seleccionar un prescaler de 1024
+	// El prescaler divide la frecuencia del reloj del sistema (16MHz) para que el Timer2 cuente a una velocidad más manejable
+	// Con un prescaler de 1024, el Timer2 contará a 16MHz/1024 = 15625Hz
+	// Esto significa que el Timer2 incrementará su valor en 1 cada 64 microsegundos
+    	TCCR2B |= (1 << CS22) | (1 << CS21) | (1 << CS20);
 
-	// Setea el bit OCIE0A (Output Compare Match Interrupt Enable) en el registro Timer Interrupt Mask Register 0 (TIMSK0)
-	// Esto habilita la interrupción que se genera cuando el Timer0 alcanza el valor en OCR0A
-	// Cuando esto ocurre, se ejecuta la rutina de servicio de interrupción asociada (ISR(TIMER0_COMPA_vect))
+	// Setea el bit OCIE2A (Output Compare Match Interrupt Enable) en el registro Timer Interrupt Mask Register 2 (TIMSK2)
+	// Esto habilita la interrupción que se genera cuando el Timer2 alcanza el valor en OCR2A
+	// Cuando esto ocurre, se ejecuta la rutina de servicio de interrupción asociada (ISR(TIMER2_COMPA_vect))
 	// Esta interrupción se utilizará para incrementar el cronómetro cada 10ms
-    	TIMSK0 |= (1 << OCIE0A);
+    	TIMSK2 |= (1 << OCIE2A);
 }
 
-ISR(TIMER0_COMPA_vect) 
+ISR(TIMER2_COMPA_vect) 
 {
 	static uint8_t cuenta = 0;
     	if (run) {
@@ -198,3 +198,16 @@ ISR(TIMER0_COMPA_vect)
     	}
 } 
 
+void mostrarCronometro(LiquidCrystal &lcd) {
+	uint32_t totalDecimas = contador;
+	uint32_t minutos = totalDecimas / 600;
+	uint32_t segundos = (totalDecimas / 10) % 60;
+	uint32_t decimas = totalDecimas % 10;
+ 
+	char buffer[9];
+	sprintf(buffer, "%01lu.%02lu.%1lu", minutos, segundos, decimas);  
+ 
+	// Escribir cronómetro
+	lcd.setCursor(0,1);
+	lcd.print(buffer);
+ }

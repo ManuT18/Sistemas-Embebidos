@@ -16,4 +16,6 @@ void incrementar();
 extern volatile uint32_t contador;   // contador global (ticks de 10ms)
 extern volatile uint8_t run;         // flag de ejecución (0 = detenido, 1 = corriendo)
 
+void mostrarCronometro(LiquidCrystal &lcd);
+
 #endif // ACTIVIDAD2_DRIVER_H
