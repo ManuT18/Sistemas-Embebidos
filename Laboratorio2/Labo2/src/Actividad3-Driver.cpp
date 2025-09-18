@@ -7,7 +7,7 @@
 
 // Variables globales internas del driver
 uint8_t NUM_KEYS = 5;
-uint16_t adc_key_val[5] = {30, 150, 360, 535, 760};
+uint16_t adc_key_val[5] = {30, 250, 360, 535, 760};
 
 static int last_key = -1;
 volatile uint16_t adc_value = 0;
