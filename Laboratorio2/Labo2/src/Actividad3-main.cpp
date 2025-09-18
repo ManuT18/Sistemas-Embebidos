@@ -22,11 +22,13 @@ bool MCAmode = false; // modo de medición continua ascendente
 bool MPmode = false; // modo de pausa
 bool MVTmode = false; // modo de visor de tiempos
 bool MADmode = false; // modo de ajuste de dimmer 
+bool upordown = true; // true = UP, false = DOWN
 
 void onKeyDown(int tecla);
 void onKeyUp(int tecla);
 void displayLargeText(String text, int cursorCol, int cursorRow);
 void storeTimeOnBuffer();
+void showBufferedTime(bool upordown);
 
 void setup() 
 {
@@ -68,7 +70,7 @@ void loop()
 
 void onKeyDown(int tecla) {
     // Si el cronómetro estaba detenido, cualquier tecla lo inicia
-    if (!timerIniciado && !run) {
+    if (!timerIniciado && (tecla == 1 || tecla == 2 || tecla == 4)) {
         MCAmode = true;
         lcd.setCursor(0, 0); lcd.clear(); lcd.print("MCA");
         run = 1;
@@ -97,6 +99,8 @@ void onKeyDown(int tecla) {
         } else if (MVTmode) {
             lcd.clear();
             lcd.setCursor(0, 0); lcd.print("MVT UP");
+            upordown = true;
+            showBufferedTime(upordown);
         }
         break;
 
@@ -115,6 +119,8 @@ void onKeyDown(int tecla) {
         } else if (MVTmode) {
             lcd.clear();
             lcd.setCursor(0, 0); lcd.print("MVT DOWN");
+            upordown = false;
+            showBufferedTime(upordown);
         }
         break;
 
@@ -210,5 +216,32 @@ void storeTimeOnBuffer() {
         lcd.setCursor(0, 1); lcd.print("Buffer Full "); delay(200); lcd.setCursor(0, 1); lcd.print("            "); delay(200);
         lcd.setCursor(0, 1); lcd.print("Buffer Full "); delay(200); lcd.setCursor(0, 1); lcd.print("            "); delay(200);
         lcd.setCursor(0, 1); lcd.print("Buffer Full "); delay(200); lcd.setCursor(0, 1); lcd.print("            "); delay(200);
+    }
+}
+
+void showBufferedTime(bool upordown) {
+    if (bufIndCol == 0) {
+        lcd.setCursor(0, 1); lcd.print("No Mem "); delay(200); lcd.setCursor(0, 1); lcd.print("       "); delay(200);
+        lcd.setCursor(0, 1); lcd.print("No Mem "); delay(200); lcd.setCursor(0, 1); lcd.print("       "); delay(200);
+        lcd.setCursor(0, 1); lcd.print("No Mem "); delay(200); lcd.setCursor(0, 1); lcd.print("       "); delay(200);
+        return;
+    }
+    if (upordown) { // UP
+        if (bufIndRow < bufIndCol) {
+            lcd.setCursor(0, 1); lcd.print("Mem" + String(bufIndRow+1) + ": " + String(storingBuffer[bufIndRow]) + "   ");
+            bufIndRow++;
+        } else {
+            bufIndRow = 0;
+            lcd.setCursor(0, 1); lcd.print("Mem" + String(bufIndRow+1) + ": " + String(storingBuffer[bufIndRow]) + "   ");
+            bufIndRow++;
+        }
+    } else { // DOWN
+        if (bufIndRow > 0) {
+            bufIndRow--;
+            lcd.setCursor(0, 1); lcd.print("Mem" + String(bufIndRow+1) + ": " + String(storingBuffer[bufIndRow]) + "   ");
+        } else {
+            bufIndRow = bufIndCol - 1;
+            lcd.setCursor(0, 1); lcd.print("Mem" + String(bufIndRow+1) + ": " + String(storingBuffer[bufIndRow]) + "   ");
+        }
     }
 }
