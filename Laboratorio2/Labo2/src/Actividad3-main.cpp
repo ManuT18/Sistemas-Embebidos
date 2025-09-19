@@ -81,7 +81,11 @@ void onKeyDown(int tecla) {
         MCAmode = true;
         lcd.setCursor(0, 0); lcd.clear(); lcd.print("MCA MODE");
         run = 1;
+
+        critical_begin();
         contador = 0;
+        critical_end();
+        
         timerIniciado = true;
         return;
     }
@@ -138,7 +142,11 @@ void onKeyDown(int tecla) {
             {
                 storeTimeOnBuffer();
                 run = 0; 
+
+                critical_begin();
                 contador = 0;
+                critical_end();
+
                 lcd.setCursor(0, 0); lcd.clear(); lcd.print("MP MODE");
             }
         } 
@@ -253,18 +261,19 @@ void onKeyUp(int tecla) {
 // Si el texto es mayor a 16 caracteres, hace scroll automático
 void displayLargeText(String text, int cursorCol, int cursorRow) {
     lcd.setCursor(cursorCol, cursorRow);
+    int typewriterDelay = 130; // Retardo para efecto de escritura
     int j = 0;
     for (int i = 0; i < text.length(); i++) {
         if (i < 15) {
             lcd.setCursor(i, 0);
             lcd.print(text.charAt(i));
-            delay(100); // Retardo para efecto de escritura
+            delay(typewriterDelay); 
         } else {
             for (i = 16; i < text.length(); i++) {
                 j++;
                 lcd.setCursor(0, 0);
                 lcd.print(text.substring(j, j+16));
-                delay(100); // Retardo para efecto de escritura
+                delay(typewriterDelay);
             }
         }
     }
@@ -289,7 +298,10 @@ void storeTimeOnBuffer() {
     if (bufIndCol < 10) { 
 
         // Toma la variable CONTADOR proveniente del driver, la convierte a formato "m.ss.d" y la almacena en el buffer
+        critical_begin();
         uint32_t currentTime = contador;
+        critical_end();
+        
         uint32_t minutes = currentTime / 600;
         uint32_t seconds = (currentTime / 10) % 60;
         uint32_t deciseconds = currentTime % 10;

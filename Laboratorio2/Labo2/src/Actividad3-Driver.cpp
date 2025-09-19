@@ -192,21 +192,29 @@ ISR(TIMER2_COMPA_vect)
     	if (run) {
         	cuenta++;
         	if (cuenta >= 10) {   // 10 ms
-            	contador++;
-            	cuenta = 0;
+            	contador++;            	
+			cuenta = 0;
         	}
     	}
 } 
 
 void mostrarCronometro(LiquidCrystal &lcd) {
+	
+	critical_begin();
 	uint32_t totalDecimas = contador;
+	critical_end();
+
 	uint32_t minutos = totalDecimas / 600;
 	uint32_t segundos = (totalDecimas / 10) % 60;
 	uint32_t decimas = totalDecimas % 10;
  
 	// Reiniciar contador si llega a 60.60.10
 	if (minutos == 60 && segundos == 60 && decimas == 10) {
+
+		critical_begin();
 		contador = 0; 
+		critical_end();
+		
 		minutos = 0;
 		segundos = 0;
 		decimas = 0;
