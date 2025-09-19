@@ -21,7 +21,7 @@ bool MCAmode = false; // modo de medición continua ascendente
 bool MPmode = false; // modo de pausa
 bool MVTmode = false; // modo de visor de tiempos
 bool MADmode = false; // modo de ajuste de dimmer 
-bool upordown = true; // true = UP, false = DOWN
+uint8_t upordown = 3; // 1 = UP, 2 = DOWN, 3 = FIRST CALL
 
 // Variables globales del MAD
 volatile long lastMadActivity = 0;
@@ -32,7 +32,7 @@ void onKeyDown(int tecla);
 void onKeyUp(int tecla);
 void displayLargeText(String text, int cursorCol, int cursorRow);
 void storeTimeOnBuffer();
-void showBufferedTime(bool upordown);
+void showBufferedTime(uint8_t upordown);
 void checkMadTimeOut();
 
 void setup() 
@@ -108,7 +108,7 @@ void onKeyDown(int tecla) {
         else if (MVTmode) {
             lcd.clear();
             lcd.setCursor(0, 0); lcd.print("MVT UP");
-            upordown = true;
+            upordown = 1;
             showBufferedTime(upordown);
         }
 
@@ -147,7 +147,7 @@ void onKeyDown(int tecla) {
         else if (MVTmode) {
             lcd.clear();
             lcd.setCursor(0, 0); lcd.print("MVT DOWN");
-            upordown = false;
+            upordown = 2;
             showBufferedTime(upordown);
         }
 
@@ -180,12 +180,12 @@ void onKeyDown(int tecla) {
     }
 
     // Debug information
-    Serial.println(" onkeydown ");
-    Serial.print(" MCA: "); Serial.println(MCAmode);
-    Serial.print(" MP: "); Serial.println(MPmode);
-    Serial.print(" MVT: "); Serial.println(MVTmode);
-    Serial.print(" MAD: "); Serial.println(MADmode);
-    Serial.println();
+    // Serial.println(" onkeydown ");
+    // Serial.print(" MCA: "); Serial.println(MCAmode);
+    // Serial.print(" MP: "); Serial.println(MPmode);
+    // Serial.print(" MVT: "); Serial.println(MVTmode);
+    // Serial.print(" MAD: "); Serial.println(MADmode);
+    // Serial.println();
 
 }
 
@@ -225,12 +225,12 @@ void onKeyUp(int tecla) {
             MVTmode = false;
             MPmode = true;
             lcd.setCursor(0, 0); lcd.clear(); lcd.print("MP MODE");
-            upordown = true; // resetear a UP
+            upordown = 3; // resetear a FIRST CALL
         } else if (MADmode) {
             MADmode = false;
             MPmode = true;
             lcd.setCursor(0, 0); lcd.clear(); lcd.print("MP MODE");
-            upordown = true; // resetear a UP
+            upordown = 3; // resetear a FIRST CALL
         }
         break;
 
@@ -239,12 +239,12 @@ void onKeyUp(int tecla) {
     }
     
     // Debug information
-    Serial.println(" onkeyup ");
-    Serial.print(" MCA: "); Serial.println(MCAmode);
-    Serial.print(" MP: "); Serial.println(MPmode);
-    Serial.print(" MVT: "); Serial.println(MVTmode);
-    Serial.print(" MAD: "); Serial.println(MADmode);
-    Serial.println();
+    // Serial.println(" onkeyup ");
+    // Serial.print(" MCA: "); Serial.println(MCAmode);
+    // Serial.print(" MP: "); Serial.println(MPmode);
+    // Serial.print(" MVT: "); Serial.println(MVTmode);
+    // Serial.print(" MAD: "); Serial.println(MADmode);
+    // Serial.println();
 
 }
 
@@ -310,9 +310,12 @@ void storeTimeOnBuffer() {
 }
 
 // Función para mostrar tiempos almacenados en buffer en modo MVT
-// upordown = true -> UP, upordown = false -> DOWN
-void showBufferedTime(bool upordown) {
-
+// upordown = 1 -> UP, upordown = 2 -> DOWN, upordown = 3 -> FIRST CALL
+void showBufferedTime(uint8_t upordown) {
+    Serial.println(" showBufferedTime ");
+    Serial.print(" bufIndCol: "); Serial.println(bufIndCol);
+    Serial.print(" bufIndRow: "); Serial.println(bufIndRow);
+    Serial.println();
     // Si no hay tiempos almacenados, mostrar mensaje de error y salir
     if (bufIndCol == 0) {
         lcd.setCursor(0, 1); lcd.print("No Mem "); delay(200); lcd.setCursor(0, 1); lcd.print("       "); delay(200);
@@ -321,22 +324,27 @@ void showBufferedTime(bool upordown) {
         return;
     }
 
+    // En la primera llamada, mostrar el primer tiempo almacenado
+    if (upordown == 3) {
+        lcd.setCursor(0, 1); lcd.print("                ");
+        lcd.setCursor(0, 1); lcd.print("Mem" + String(bufIndRow + 1) + ": " + String(storingBuffer[bufIndRow]) + "   ");
+        return;
+    }
+    
+    // Actualizar índice de fila según dirección (UP/DOWN) y límites del buffer
+    if (upordown == 1) { // UP
+        if (bufIndRow < bufIndCol - 1) {
+            bufIndRow++;
+        } // si ya está en el último, no hacer nada
+        
+    } else if (upordown == 2){ // DOWN
+        if (bufIndRow > 0) {
+            bufIndRow--;
+        } // si ya está en el primero, no hacer nada
+        
+    }
+
     // Mostrar siempre la memoria actual
     lcd.setCursor(0, 1); lcd.print("                ");
     lcd.setCursor(0, 1); lcd.print("Mem" + String(bufIndRow + 1) + ": " + String(storingBuffer[bufIndRow]) + "   ");
-
-    // Navegar y forzar límites
-    if (upordown) { // UP
-        if (bufIndRow < bufIndCol - 1) {
-            bufIndRow++;
-        } else {
-            bufIndRow = bufIndCol - 1;  // Forzar a la última si ya lo es
-        }
-    } else { // DOWN
-        if (bufIndRow > 0) {
-            bufIndRow--;
-        } else {
-            bufIndRow = 0;  // Forzar a la primera si ya lo es
-        }
-    }
 }
