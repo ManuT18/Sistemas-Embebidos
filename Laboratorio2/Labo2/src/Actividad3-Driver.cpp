@@ -204,6 +204,14 @@ void mostrarCronometro(LiquidCrystal &lcd) {
 	uint32_t segundos = (totalDecimas / 10) % 60;
 	uint32_t decimas = totalDecimas % 10;
  
+	// Reiniciar contador si llega a 60.60.10
+	if (minutos == 60 && segundos == 60 && decimas == 10) {
+		contador = 0; 
+		minutos = 0;
+		segundos = 0;
+		decimas = 0;
+	}
+
 	char buffer[9];
 	sprintf(buffer, "%01lu.%02lu.%1lu", minutos, segundos, decimas);  
  
