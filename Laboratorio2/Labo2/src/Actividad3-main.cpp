@@ -37,8 +37,8 @@ void checkMadTimeOut();
 
 void setup() 
 {
-    Serial.begin(9600);
-    Serial.println("Iniciando...");
+    // Serial.begin(9600);
+    // Serial.println("Iniciando...");
 
     lcd.begin(16,2);
     analogWrite(10, valores_dimmer[dimmer_index]); // Controla intensidad backlight
@@ -48,12 +48,12 @@ void setup()
     String msg = "BUEN DIA!          ";
     displayLargeText(msg, 0, 0);
     lcd.clear();
-    // msg = "ESTA ES LA CATEDRA DE SISTEMAS EMBEBIDOS DE MANUEL TAURO Y GONZALO AGUIRRE, DEL 2DO CUATRIMESTRE DE 2025        ";
-    // displayLargeText(msg, 0, 0);
-    // lcd.clear();
-    // msg = "PRESIONE CUALQUIER TECLA PARA INICIAR EL CRONOMETRO           ";
-    // displayLargeText(msg, 0, 0);
-    // lcd.clear();
+    msg = "ESTA ES LA CATEDRA DE SISTEMAS EMBEBIDOS DE MANUEL TAURO Y GONZALO AGUIRRE, DEL 2DO CUATRIMESTRE DE 2025        ";
+    displayLargeText(msg, 0, 0);
+    lcd.clear();
+    msg = "PRESIONE CUALQUIER TECLA PARA INICIAR EL CRONOMETRO           ";
+    displayLargeText(msg, 0, 0);
+    lcd.clear();
 
     cli(); // deshabilitar interrupciones globales
     fnqueue_init();
@@ -312,10 +312,13 @@ void storeTimeOnBuffer() {
 // Función para mostrar tiempos almacenados en buffer en modo MVT
 // upordown = 1 -> UP, upordown = 2 -> DOWN, upordown = 3 -> FIRST CALL
 void showBufferedTime(uint8_t upordown) {
-    Serial.println(" showBufferedTime ");
-    Serial.print(" bufIndCol: "); Serial.println(bufIndCol);
-    Serial.print(" bufIndRow: "); Serial.println(bufIndRow);
-    Serial.println();
+    
+    // Debug information
+    // Serial.println(" showBufferedTime ");
+    // Serial.print(" bufIndCol: "); Serial.println(bufIndCol);
+    // Serial.print(" bufIndRow: "); Serial.println(bufIndRow);
+    // Serial.println();
+    
     // Si no hay tiempos almacenados, mostrar mensaje de error y salir
     if (bufIndCol == 0) {
         lcd.setCursor(0, 1); lcd.print("No Mem "); delay(200); lcd.setCursor(0, 1); lcd.print("       "); delay(200);
