@@ -23,11 +23,17 @@ bool MVTmode = false; // modo de visor de tiempos
 bool MADmode = false; // modo de ajuste de dimmer 
 bool upordown = true; // true = UP, false = DOWN
 
+// Variables globales del MAD
+volatile long lastMadActivity = 0;
+const uint8_t valores_dimmer[5] = {51, 102, 153, 204, 255}; //Los valores para el dimmer
+volatile uint8_t dimmer_index = 3; // empieza en 80%
+
 void onKeyDown(int tecla);
 void onKeyUp(int tecla);
 void displayLargeText(String text, int cursorCol, int cursorRow);
 void storeTimeOnBuffer();
 void showBufferedTime(bool upordown);
+void checkMadTimeOut();
 
 void setup() 
 {
@@ -35,7 +41,7 @@ void setup()
     Serial.println("Iniciando...");
 
     lcd.begin(16,2);
-    analogWrite(10, 200); // Controla intensidad backlight
+    analogWrite(10, valores_dimmer[dimmer_index]); // Controla intensidad backlight
 
     lcd.clear();           // limpia toda la pantalla
     lcd.setCursor(0,0);
@@ -64,6 +70,8 @@ void loop()
     fnqueue_run();
     if (!MVTmode)
         mostrarCronometro(lcd);
+    if(MADmode)
+        checkMadTimeOut();
 }
 
 void onKeyDown(int tecla) {
@@ -71,7 +79,7 @@ void onKeyDown(int tecla) {
     // Si el cronómetro estaba detenido, cualquiera de las 3 teclas (UP, DOWN, SELECT) lo inicia
     if (!timerIniciado && (tecla == 1 || tecla == 2 || tecla == 4)) {
         MCAmode = true;
-        lcd.setCursor(0, 0); lcd.clear(); lcd.print("MCA");
+        lcd.setCursor(0, 0); lcd.clear(); lcd.print("MCA MODE");
         run = 1;
         contador = 0;
         timerIniciado = true;
@@ -88,12 +96,12 @@ void onKeyDown(int tecla) {
             run = !run; 
             MCAmode = false; 
             MPmode = true;
-            lcd.setCursor(0, 0); lcd.clear(); lcd.print("MP");
+            lcd.setCursor(0, 0); lcd.clear(); lcd.print("MP MODE");
         } else if (MPmode) {
             run = !run; 
             MCAmode = true;
             MPmode = false;
-            lcd.setCursor(0, 0); lcd.clear(); lcd.print("MCA");
+            lcd.setCursor(0, 0); lcd.clear(); lcd.print("MCA MODE");
         } 
 
         // Si está en MVT, muestra el siguiente tiempo almacenado en buffer con tecla UP
@@ -103,6 +111,20 @@ void onKeyDown(int tecla) {
             upordown = true;
             showBufferedTime(upordown);
         }
+
+        else if(MADmode){
+            lastMadActivity = millis(); // Actualizo el tiempo de presion
+            lcd.clear(); lcd.setCursor(0,0); lcd.print("MAD MODE");
+
+            if(dimmer_index < 4) 
+                dimmer_index++;
+            
+            analogWrite(10,valores_dimmer[dimmer_index]);
+            lcd.setCursor(0,0);lcd.print("MAD MODE  ");  
+            lcd.print(valores_dimmer[dimmer_index] * 100 / 255); // 0,20,40,...100%
+            lcd.print("%");
+        }
+
         break;
 
     case 2: // TECLA DOWN
@@ -117,7 +139,7 @@ void onKeyDown(int tecla) {
                 storeTimeOnBuffer();
                 run = 0; 
                 contador = 0;
-                lcd.setCursor(0, 0); lcd.clear(); lcd.print("MP");
+                lcd.setCursor(0, 0); lcd.clear(); lcd.print("MP MODE");
             }
         } 
         
@@ -128,6 +150,21 @@ void onKeyDown(int tecla) {
             upordown = false;
             showBufferedTime(upordown);
         }
+
+        else if(MADmode){
+            lastMadActivity = millis();
+            lcd.setCursor(0,0);
+            lcd.clear();
+
+            if(dimmer_index > 0) 
+                dimmer_index--;
+            
+            analogWrite(10,valores_dimmer[dimmer_index]);
+            lcd.setCursor(0,0);lcd.print("MAD MODE  ");  
+            lcd.print(valores_dimmer[dimmer_index] * 100 / 255); // 0,20,40,...100%
+            lcd.print("%");
+
+            }
         break;
 
     case 4: // TECLA SELECT
@@ -167,7 +204,7 @@ void onKeyUp(int tecla) {
             if (pressDuration < 3000) {  // Presión corta (<3s): cambiar a MVT
                 MPmode = false;
                 MVTmode = true;
-                lcd.setCursor(0, 0); lcd.clear(); lcd.print("MVT");
+                lcd.setCursor(0, 0); lcd.clear(); lcd.print("MVT MODE");
 
                 // Como se ingresó a MVT desde MP, mostrar el tiempo almacenado 
                 bufIndRow = 0; // resetear índice de fila
@@ -175,7 +212,11 @@ void onKeyUp(int tecla) {
             } else {  // Presión larga (>=3s): cambiar a MAD (según consigna)
                 MPmode = false;
                 MADmode = true;
-                lcd.setCursor(0, 0); lcd.clear(); lcd.print("MAD");
+                lastMadActivity = millis();
+                lcd.clear();
+                lcd.setCursor(0,0);lcd.print("MAD MODE  ");  
+                lcd.print(valores_dimmer[dimmer_index] * 100 / 255); // 0,20,40,...100%
+                lcd.print("%");
             }
         } 
         
@@ -183,12 +224,12 @@ void onKeyUp(int tecla) {
         else if (MVTmode) {
             MVTmode = false;
             MPmode = true;
-            lcd.setCursor(0, 0); lcd.clear(); lcd.print("MP");
+            lcd.setCursor(0, 0); lcd.clear(); lcd.print("MP MODE");
             upordown = true; // resetear a UP
         } else if (MADmode) {
             MADmode = false;
             MPmode = true;
-            lcd.setCursor(0, 0); lcd.clear(); lcd.print("MP");
+            lcd.setCursor(0, 0); lcd.clear(); lcd.print("MP MODE");
             upordown = true; // resetear a UP
         }
         break;
@@ -229,6 +270,20 @@ void displayLargeText(String text, int cursorCol, int cursorRow) {
     }
 }
 
+// Función para verificar tiempo de inactividad en MAD y salir si supera 10 segundos
+//esta es la funcion que llamo desde el loop para controlar q el tiempo no supere a los 5s sin actividad
+void checkMadTimeOut(){
+    if(MADmode){
+        if(millis() - lastMadActivity >= 5000){
+            MADmode = false;
+            MPmode = true;
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("MP MODE"); 
+        }
+    }
+}
+
 // Función para almacenar el tiempo actual en el buffer
 void storeTimeOnBuffer() {
     if (bufIndCol < 10) { 
@@ -244,7 +299,7 @@ void storeTimeOnBuffer() {
         // Muestra en LCD el tiempo almacenado recientemente por 1.5 segundos
         String printingmessage = "Mem" + String(bufIndCol) + ": ";
         lcd.setCursor(0, 1); lcd.print(printingmessage); lcd.setCursor(printingmessage.length(),1); lcd.print(storingBuffer[bufIndCol-1]);
-        delay(1500);
+        delay(600);
         lcd.setCursor(0, 1); lcd.print("                "); // limpiar línea
     } else {
         // Buffer lleno, mostrar mensaje de error
@@ -266,22 +321,22 @@ void showBufferedTime(bool upordown) {
         return;
     }
 
-    // Mostrar el tiempo almacenado segun la dirección UP/DOWN
+    // Mostrar siempre la memoria actual
+    lcd.setCursor(0, 1); lcd.print("                ");
+    lcd.setCursor(0, 1); lcd.print("Mem" + String(bufIndRow + 1) + ": " + String(storingBuffer[bufIndRow]) + "   ");
+
+    // Navegar y forzar límites
     if (upordown) { // UP
-        if (bufIndRow < bufIndCol) {
-            if (bufIndRow < bufIndCol - 1 || bufIndRow == 0) {
-                bufIndRow++;
-            }
-
-            lcd.setCursor(0, 1); lcd.print("                "); lcd.setCursor(0, 1); lcd.print("Mem" + String(bufIndRow+1) + ": " + String(storingBuffer[bufIndRow]) + "   ");
-        } 
+        if (bufIndRow < bufIndCol - 1) {
+            bufIndRow++;
+        } else {
+            bufIndRow = bufIndCol - 1;  // Forzar a la última si ya lo es
+        }
     } else { // DOWN
-        if (bufIndCol > 0) {
-            if (bufIndRow > 0) {
-                bufIndRow--;
-            }
-
-            lcd.setCursor(0, 1); lcd.print("                "); lcd.setCursor(0, 1); lcd.print("Mem" + String(bufIndRow+1) + ": " + String(storingBuffer[bufIndRow]) + "   ");
-        } 
+        if (bufIndRow > 0) {
+            bufIndRow--;
+        } else {
+            bufIndRow = 0;  // Forzar a la primera si ya lo es
+        }
     }
 }
