@@ -2,6 +2,7 @@
 #include "adc_driver.h"
 #include "fnqueue.h"
 #include <Arduino.h>
+#include <LiquidCrystal.h>
 #include <stdio.h>
 
 // --------------------------------------------------
@@ -23,6 +24,9 @@ void on_ldr_update(float lux) {
 // Configuraciones globales de los drivers
 // --------------------------------------------------
 ldr_cfg_t ldr_conf;
+float lux_actual = 0;
+unsigned long last_upadate = 0;
+const unsigned long interval = 500;
 
 void setup() {
     Serial.begin(9600);
