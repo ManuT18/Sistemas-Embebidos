@@ -46,9 +46,7 @@ void adc_init(const adc_cfg_t *cfg)
 
 ISR(ADC_vect)
 {
-    
-
-    //uutcfhchch
+    // Leer valor ADC
     adc_values[canal_actual] = ADC;
 
     // Encolar handler fuera de ISR
@@ -73,8 +71,9 @@ ISR(ADC_vect)
 
 static void adc_handler(void)
 {
-    if(adc_channels[canal_actual])
+    volatile uint8_t canal_actual_aux = canal_actual;
+    if(adc_channels[canal_actual_aux])
     {
-        adc_channels[canal_actual](canal_actual, adc_values[canal_actual]);
+        adc_channels[canal_actual_aux](canal_actual_aux, adc_values[canal_actual_aux]);
     }
 }

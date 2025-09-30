@@ -26,7 +26,7 @@ void on_ldr_update(float lux) {
 ldr_cfg_t ldr_conf;
 float lux_actual = 0;
 unsigned long last_upadate = 0;
-const unsigned long interval = 500;
+//const unsigned long interval = 500;
 
 void setup() {
     Serial.begin(9600);
@@ -35,7 +35,7 @@ void setup() {
     // -----------------------------
     // Inicialización del LDR
     // -----------------------------
-    ldr_conf.channel = 0; 
+    ldr_conf.channel = 1; 
     ldr_conf.callback = on_ldr_update;
     ldr_init(&ldr_conf);
 }
@@ -43,4 +43,5 @@ void setup() {
 void loop() {
 
     fnqueue_run();
+    
 }

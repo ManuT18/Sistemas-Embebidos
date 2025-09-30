@@ -42,7 +42,7 @@ static void ldr_adc_callback(uint8_t channel, uint16_t adc_value)
 
     float lux = resistance_to_lux(Rldr);
 
-    Serial.print("Rldr: "); Serial.print(Rldr); Serial.print(" ohms. Lux: "); Serial.println(lux);
+    // Serial.print("Rldr: "); Serial.print(Rldr); Serial.print(" ohms. Lux: "); Serial.println(lux);
 
     if (ldr_user_callback) {
         ldr_user_callback(lux);
