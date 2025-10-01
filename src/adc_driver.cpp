@@ -23,28 +23,30 @@ static bool inicializado = false;
 
 void adc_init(const adc_cfg_t *cfg)
 {
-    // Verificar canal válido
-    if(cfg->channel >= ADC_MAX_CHANNELS) return;
+    
+        // Verificar canal válido
+        if(cfg->channel >= ADC_MAX_CHANNELS) return;
 
-    // Guardar callback y marcar canal como activo
-    adc_channels[cfg->channel] = cfg->callback;
-    canal_activo[cfg->channel] = true;
+        // Guardar callback y marcar canal como activo
+        adc_channels[cfg->channel] = cfg->callback;
+        canal_activo[cfg->channel] = true;
 
-    // Configuración global del ADC (solo la primera vez)
-    if(!inicializado)
-    {
-        inicializado = true;
+        // Configuración global del ADC (solo la primera vez)
+        if(!inicializado)
+        {
+            inicializado = true;
 
-        // Referencia AVCC
-        ADMUX = (1 << REFS0);
+            // Referencia AVCC
+            ADMUX = (1 << REFS0);
 
-        // Prescaler 128 → 125 kHz para Arduino UNO
-        ADCSRA = (1 << ADEN) | (1 << ADIE) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+            // Prescaler 128 → 125 kHz para Arduino UNO
+            ADCSRA = (1 << ADEN) | (1 << ADIE) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
 
-        // Iniciar primera conversión en canal 0
-        ADMUX = (ADMUX & 0xF0) | (canal_actual & 0x0F);
-        ADCSRA |= (1 << ADSC);
-    }
+            // Iniciar primera conversión en canal 0
+            ADMUX = (ADMUX & 0xF0) | (canal_actual & 0x0F);
+            ADCSRA |= (1 << ADSC);
+        }
+        
 }
 
 ISR(ADC_vect)
@@ -54,6 +56,15 @@ ISR(ADC_vect)
 
     // Encolar handler fuera de ISR
     fnqueue_add(adc_handler);
+}
+
+static void adc_handler(void)
+{
+    volatile uint8_t canal_actual_aux = canal_actual;
+    if(adc_channels[canal_actual_aux])
+    {
+        adc_channels[canal_actual_aux](canal_actual_aux, adc_values[canal_actual_aux]);
+    }
 
     // Round-robin: buscar próximo canal activo
     uint8_t siguiente = canal_actual;
@@ -70,13 +81,4 @@ ISR(ADC_vect)
     // Iniciar conversión en próximo canal
     ADMUX = (ADMUX & 0xF0) | (canal_actual & 0x0F);
     ADCSRA |= (1 << ADSC);
-}
-
-static void adc_handler(void)
-{
-    volatile uint8_t canal_actual_aux = canal_actual;
-    if(adc_channels[canal_actual_aux])
-    {
-        adc_channels[canal_actual_aux](canal_actual_aux, adc_values[canal_actual_aux]);
-    }
 }
