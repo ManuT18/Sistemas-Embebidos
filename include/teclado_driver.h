@@ -13,7 +13,7 @@ typedef struct {
 } handler_t;
 
 // Inicialización del teclado
-void keyboard_init(void);
+void keyboard_init();
 
 // Registro de callbacks
 void key_down_callback(void (*handler)(), int key);

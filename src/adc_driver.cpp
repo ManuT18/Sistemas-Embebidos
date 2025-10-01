@@ -18,8 +18,12 @@ static bool canal_activo[ADC_MAX_CHANNELS];
 // Handler encolado
 static void adc_handler(void);
 
+// Variable para evitar inicialización múltiple
+static bool inicializado = false;
+
 void adc_init(const adc_cfg_t *cfg)
 {
+    // Verificar canal válido
     if(cfg->channel >= ADC_MAX_CHANNELS) return;
 
     // Guardar callback y marcar canal como activo
@@ -27,7 +31,6 @@ void adc_init(const adc_cfg_t *cfg)
     canal_activo[cfg->channel] = true;
 
     // Configuración global del ADC (solo la primera vez)
-    static bool inicializado = false;
     if(!inicializado)
     {
         inicializado = true;

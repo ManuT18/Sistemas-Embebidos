@@ -1,4 +1,4 @@
-#include "ldr.h"
+#include "ldr_driver.h"
 #include "adc_driver.h"  
 #include <Arduino.h>
 #include <stdio.h>
@@ -10,7 +10,7 @@ static ldr_callback_t ldr_user_callback;
 // Se usó la tabla ldr_R en base a mediciones realizadas con el LDR y una resistencia fija de 1kΩ
 // La tabla ldr_lux es la dada en el enunciado del laboratorio
 static const float ldr_R[] = {25000, 12589, 6310, 4500, 3162, 1585, 794, 398, 100};
-static const float ldr_lux[] = {0.5, 1, 3, 50, 60, 70, 80, 90, 100}; 
+static const float ldr_lux[] = {0.5, 1.2, 2.8, 4, 5.8, 13.4, 31, 71.5, 100}; 
 
 
 static float resistance_to_lux(float R)

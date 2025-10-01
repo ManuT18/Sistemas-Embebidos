@@ -36,12 +36,15 @@ static void keyboard_adc_callback(uint8_t channel, uint16_t adc_value) {
         db_counter = 0;
 
         if (tecla_actual != last_key) {
+
             if (tecla_actual != -1 && handlers[tecla_actual].key_down) {
                 handlers[tecla_actual].key_down();
             }
+            
             if (last_key != -1 && handlers[last_key].key_up) {
                 handlers[last_key].key_up();
             }
+            
             last_key = tecla_actual;
         }
     }
@@ -49,6 +52,7 @@ static void keyboard_adc_callback(uint8_t channel, uint16_t adc_value) {
 
 // -------------------
 // Inicialización del teclado (configura ADC)
+// -------------------
 void keyboard_init() {
     adc_cfg_t adc_cfg;
     adc_cfg.channel = 0; // canal donde está conectado el teclado
@@ -59,6 +63,7 @@ void keyboard_init() {
 
 // -------------------
 // Registro de callbacks
+// -------------------
 void key_down_callback(void (*handler)(), int tecla) {
     if (tecla >= 0 && tecla < NUM_KEYS) {
         handlers[tecla].key_down = handler;
