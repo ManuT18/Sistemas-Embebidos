@@ -31,7 +31,8 @@ void on_ldr_update(float lux) {
     if (now - last_print >= interval) {
         last_print = now;
         Serial.print("Luz medida: ");
-        Serial.println(lux);
+        Serial.print(lux);
+        Serial.println(" LUX");
     }
 }
 
