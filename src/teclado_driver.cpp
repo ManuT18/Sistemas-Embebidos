@@ -13,6 +13,7 @@ static int tecla_actual = -1;
 static handler_t handlers[NUM_KEYS];
 static int num_keys = NUM_KEYS;
 
+
 // -------------------
 // Función que interpreta el ADC y devuelve índice de tecla
 // -------------------
@@ -24,6 +25,7 @@ static int get_key(uint16_t adc_value) {
     }
     return -1; // ninguna tecla presionada
 }
+
 
 // -------------------
 // Callback que el ADC llama cuando termina la conversión
@@ -50,6 +52,7 @@ static void keyboard_adc_callback(uint8_t channel, uint16_t adc_value) {
     }
 }
 
+
 // -------------------
 // Inicialización del teclado (configura ADC)
 // -------------------
@@ -61,6 +64,7 @@ void keyboard_init() {
     adc_init(&adc_cfg);
 }
 
+
 // -------------------
 // Registro de callbacks
 // -------------------
@@ -70,8 +74,10 @@ void key_down_callback(void (*handler)(), int tecla) {
     }
 }
 
+
 void key_up_callback(void (*handler)(), int tecla) {
     if (tecla >= 0 && tecla < NUM_KEYS) {
         handlers[tecla].key_up = handler;
     }
 }
+

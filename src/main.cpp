@@ -9,34 +9,11 @@
 // --------------------------------------------------
 // Callbacks
 // --------------------------------------------------
-uint16_t last_print = 0;
-uint16_t interval = 1000; 
 
-// Callback del LDR (recibe valor de lux)
-void on_ldr_update(float lux) {
-    uint16_t now = millis();
-    if (now - last_print >= interval) {
-        last_print = now;
-        Serial.print("Luz medida: ");
-        Serial.print(lux);
-        Serial.println(" LUX");
-    }
-}
-
-// Callback genérico que imprime la tecla (recibe índice)
-void on_keyboard_down_event(int tecla) {
-    Serial.print("Tecla ");
-    Serial.print(tecla);
-    Serial.println(" presionada");
-}
-
-// Callback genérico que imprime la tecla (recibe índice)
-void on_keyboard_up_event(int tecla) {
-    Serial.print("Tecla ");
-    Serial.print(tecla);
-    Serial.println(" soltada");
-}
-
+// Declaración de funciones y callbacks
+void on_ldr_update(float lux);
+void on_keyboard_down_event(int tecla);
+void on_keyboard_up_event(int tecla);
 
 // Asignación de callbacks específicos por tecla para key down y key up
 void on_key0_down() { on_keyboard_down_event(0); }
@@ -52,7 +29,6 @@ void on_key3_up() { on_keyboard_up_event(3); }
 void on_key4_up() { on_keyboard_up_event(4); }
 
 
-
 // --------------------------------------------------
 // Configuraciones globales de los drivers
 // --------------------------------------------------
@@ -60,7 +36,9 @@ LiquidCrystal lcd(8, 9, 4, 5, 6, 7); // Declare LCD with pins (adjust as needed)
 ldr_cfg_t ldr_conf;
 float lux_actual = 0;
 unsigned long last_upadate = 0;
-//const unsigned long interval = 500;
+uint16_t last_print = 0;
+uint16_t interval = 75; 
+
 
 void setup() {
 
@@ -72,8 +50,6 @@ void setup() {
     Serial.println("Sistema iniciado");
     lcd.begin(16, 2);
     lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Iniciado");
 
     cli(); // deshabilitar interrupciones globales
 
@@ -110,8 +86,64 @@ void setup() {
     key_up_callback(on_key4_up, 4);
 }
 
+
 void loop() {
 
     fnqueue_run();
 
+}
+
+
+// Callback del LDR (recibe valor de lux)
+void on_ldr_update(float lux) {
+    uint16_t now = millis();
+    if (now - last_print >= interval) {
+        last_print = now;
+        
+        lcd.setCursor(0, 1);
+        lcd.print("Luz: "); lcd.print(lux); lcd.print(" LUX");
+    }
+}
+
+
+// Callback genérico que imprime la tecla (recibe índice)
+void on_keyboard_down_event(int tecla) {
+    switch (tecla)
+    {
+    case 0:
+        lcd.setCursor(0, 0);
+        lcd.print("tecla 0");
+        break;
+    
+    case 1:
+        lcd.setCursor(0, 0);
+        lcd.print("tecla 1");
+        break;
+
+    case 2:
+        lcd.setCursor(0, 0);
+        lcd.print("tecla 2");
+        break;
+
+    case 3:
+        lcd.setCursor(0, 0);
+        lcd.print("tecla 3");
+        break;
+
+    case 4:
+        lcd.setCursor(0, 0);
+        lcd.print("tecla 4");
+        break;
+        
+    default:
+        break;
+    }
+}
+
+
+// Callback genérico que imprime la tecla (recibe índice)
+void on_keyboard_up_event(int tecla) {
+    Serial.print("Tecla ");
+    Serial.print(tecla);
+    Serial.println(" soltada");
 }

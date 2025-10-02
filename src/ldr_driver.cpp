@@ -12,6 +12,15 @@ static ldr_callback_t ldr_user_callback;
 static const float ldr_R[] = {92000, 41000, 24000, 16000, 10000, 7000, 5000, 1000, 500};
 static const float ldr_lux[] = {0.5, 1, 3, 6, 10, 15, 35, 80, 100}; 
 
+// Variables para guardar los valores promedio y minimos y maximos historicos
+static float min_lux = -1.0f;
+static float max_lux = 0.0f;    
+
+// Definición del arreglo circular para almacenar los últimos 200 valores de lux
+static float lux_buffer[200];
+static int buffer_index = 0;
+static int buffer_count = 0;
+
 
 static float resistance_to_lux(float R)
 {
@@ -34,6 +43,24 @@ static float resistance_to_lux(float R)
 }
 
 
+void store_lux_on_buffer(float lux) {
+    // Almacenar el valor de lux en el buffer circular
+    lux_buffer[buffer_index] = lux;
+    buffer_index = (buffer_index + 1) % 200;
+    if (buffer_count < 200) {
+        buffer_count++;
+    }
+}
+
+
+void save_lux_if_min_or_max(float lux) {
+    if (min_lux == -1.0f) { min_lux = lux; } // Guardar primer valor como minimo
+    if (lux < min_lux) { min_lux = lux; } // Actualizar minimo historico
+
+    if (lux > max_lux) { max_lux = lux; } // Actualizar maximo historico
+}
+
+
 static void ldr_adc_callback(uint8_t channel, uint16_t adc_value)
 {
     float Vadc = (adc_value / 1023.0f) * 5.0f;
@@ -42,6 +69,10 @@ static void ldr_adc_callback(uint8_t channel, uint16_t adc_value)
 
     float lux = resistance_to_lux(Rldr);
 
+    store_lux_on_buffer(lux);
+
+    save_lux_if_min_or_max(lux);
+
     // Serial.print("  Rldr: "); Serial.print(Rldr); 
     // Serial.print("  Lux: "); Serial.println(lux);
 
@@ -49,6 +80,7 @@ static void ldr_adc_callback(uint8_t channel, uint16_t adc_value)
         ldr_user_callback(lux);
     }
 }
+
 
 void ldr_init(const ldr_cfg_t *cfg)
 {

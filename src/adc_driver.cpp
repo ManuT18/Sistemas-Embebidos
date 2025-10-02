@@ -22,9 +22,9 @@ static void adc_handler(void);
 // Variable para evitar inicialización múltiple
 static bool inicializado = false;
 
+
 bool adc_init(const adc_cfg_t *cfg)
 {
-    
     // Verificar canal válido
     if(cfg->channel >= ADC_MAX_CHANNELS) return false;
 
@@ -51,6 +51,7 @@ bool adc_init(const adc_cfg_t *cfg)
     return true;
 }
 
+
 ISR(ADC_vect)
 {
     // Leer valor ADC
@@ -59,6 +60,7 @@ ISR(ADC_vect)
     // Encolar handler fuera de ISR
     fnqueue_add(adc_handler);
 }
+
 
 static void adc_handler(void)
 {
@@ -86,3 +88,4 @@ static void adc_handler(void)
     ADMUX = (ADMUX & 0xF0) | (canal_actual & 0x0F);
     ADCSRA |= (1 << ADSC);
 }
+
