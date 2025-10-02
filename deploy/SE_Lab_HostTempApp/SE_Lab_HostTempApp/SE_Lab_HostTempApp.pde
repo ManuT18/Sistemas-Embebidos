@@ -1,103 +1,88 @@
-
 /**
- * Ejemplo de skecth Processing para el desarrollo del Laboratorio.
+ * Ejemplo de sketch Processing para el desarrollo del Laboratorio.
  *
- * Este skecth implementa un programa en el host que tiene la capacidad de
- * graficar funciones que evolucionan en el tiempo y además permite la
- * presentación de datos simples mediante Labels, y la captura de eventos
- * del usuario mediante la implementación de botones simples.
- *
- * La aplicación divide la ventana en 2 regiones, una de dibujado y otra 
- * donde se ubican los botones y etiquetas de información.
- *
+ * Este sketch permite graficar funciones que evolucionan en el tiempo,
+ * mostrar valores en labels y recibir datos de Arduino vía Serial.
  */
 
+import processing.serial.*;
 
 // Declaraciones para graficar funciones...
 int cosVal;
 int cantValues;
-ScrollingFcnPlot f1,f2;
+ScrollingFcnPlot f1, f2;
 
-//Botones...
+// Botones...
 RectButton rectBtn1, rectBtn2;
 PFont myFont;
 
-//Etiquetas textuales...
+// Etiquetas textuales...
 boolean alert = false;
 boolean prealert = false;
 Label lbl1, lbl2, lbl3, lbl4, lbl5, lbl6, lbl7, lbl8, lbl9, lbl10, lbl11;
-Label yVal1,yVal2,yVal3;
+Label yVal1, yVal2, yVal3;
 
-//Ventana y viewports...
+// Ventana y viewports...
 int pgFunctionViewportWidth = 480;
 int pgControlViewportWidth = 120;
 int pgViewportsHeight = 240;
 
-void setup() {
+// Puerto Serial
+Serial myPort;
 
-  //Se define el tamaño de la ventana de la aplicación... 
-  size(680,480);
-  
-  //Se inicializan los arreglos para almacenar las funciones...
+void setup() {
+  size(680, 480);
+
+  // Inicialización de gráficos
   cantValues = pgFunctionViewportWidth;
-  f1 = new ScrollingFcnPlot(cantValues,color(100,0,0),-1,1);
-  f2 = new ScrollingFcnPlot(cantValues,color(0,100,0),0,height);
-  
-  //Se inicializan los botones...
-  rectBtn1 = new RectButton(pgFunctionViewportWidth+10,10,60,40,color(102),color(50),color(255),"B1");
-  rectBtn2 = new RectButton(pgFunctionViewportWidth+10,60,60,40,color(102),color(50),color(255),"B2");
-  
-  //Se inicializan los labels...
+  f1 = new ScrollingFcnPlot(cantValues, color(100,0,0), -1, 1);
+  f2 = new ScrollingFcnPlot(cantValues, color(0,100,0), 0, height);
+
+  // Inicialización de botones
+  rectBtn1 = new RectButton(pgFunctionViewportWidth+10, 10, 60, 40, color(102), color(50), color(255), "B1");
+  rectBtn2 = new RectButton(pgFunctionViewportWidth+10, 60, 60, 40, color(102), color(50), color(255), "B2");
+
+  // Inicialización de labels
   lbl1 = new Label(pgFunctionViewportWidth+10,110,color(255),"Status: ");
   lbl2 = new Label(pgFunctionViewportWidth+60,110,color(255),"-");
   lbl3 = new Label(pgFunctionViewportWidth+10,130,color(255),"T.Actual: ");
-  lbl4 = new Label(pgFunctionViewportWidth+70,130,color(255),"30ºC");
+  lbl4 = new Label(pgFunctionViewportWidth+70,130,color(255),"30 LUX");
   lbl5 = new Label(pgFunctionViewportWidth+10,150,color(255),"T.Max: ");
-  lbl6 = new Label(pgFunctionViewportWidth+70,150,color(255),"30ºC");
+  lbl6 = new Label(pgFunctionViewportWidth+70,150,color(255),"30 LUX");
   lbl7 = new Label(pgFunctionViewportWidth+10,170,color(255),"T.Min: ");
-  lbl8 = new Label(pgFunctionViewportWidth+70,170,color(255),"30ºC");
+  lbl8 = new Label(pgFunctionViewportWidth+70,170,color(255),"30 LUX");
   lbl9 = new Label(pgFunctionViewportWidth+10,190,color(255),"T.Prom: ");
-  lbl10 = new Label(pgFunctionViewportWidth+70,190,color(255),"30ºC");
+  lbl10 = new Label(pgFunctionViewportWidth+70,190,color(255),"30 LUX");
   lbl11 = new Label(pgFunctionViewportWidth+10,210,color(255,0,0),"ALERTA!!!");
-  
+
   yVal1 = new Label(10,5,color(255),"+1");
   yVal2 = new Label(10,(pgViewportsHeight-20)/2,color(255),"0");
   yVal3 = new Label(10,pgViewportsHeight-25,color(255),"-1");
-  
-  //Inicializa el font de la GUI...
-  myFont = createFont("FFScala", 14);
+
+  // Fuente de la GUI
+  myFont = createFont("Arial", 14);
   textFont(myFont);
-  
+
+  // Inicializar puerto Serial en COM6
+  myPort = new Serial(this, "COM5", 9600);
+  myPort.bufferUntil('\n');
+  println("Puerto Serial abierto: COM5");
 }
 
 void draw() {
-
-  
-  //Se actualizan las funciones de ejemplo (f1: coseno(x), f2: función que depende de la posición Y del mouse)
-  float amount = map(cosVal, 0, cantValues, 0, 2*PI);
-  f1.updateValue(cos(amount));
-  f2.updateValue(height-mouseY);
-  
-  //Se incrementa el ángulo de la función coseno...
-  cosVal = (cosVal + 1) % cantValues;
-  
-  //Permite expermientar con la velocidad de scroll al actualizar más lentamente los valores...
-  //delay(50);
-     
-  //Rendering de la interface...
   background(125);
   stroke(0);
   noFill();
- 
-  //Dibuja las funciones...
+
+  // Dibuja las funciones
   f1.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
   f2.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
-  
-  //Procesa eventos de MouseOver...
+
+  // Procesa eventos de MouseOver
   rectBtn1.update();
   rectBtn2.update();
-  
-  //Procesa las entradas (botones)
+
+  // Procesa las entradas (botones)
   if(mousePressed) {
     if(rectBtn1.pressed()) {
       rectBtn1.currentcolor = color(0,100,0);
@@ -110,18 +95,17 @@ void draw() {
       prealert = true;
     }
   }
-  
-  
-  //Dibuja el eje X y el recuadro de los gráficos...
+
+  // Dibuja el eje X y el recuadro de los gráficos
   stroke(0);
   line(30, pgViewportsHeight/2, pgFunctionViewportWidth-10, pgViewportsHeight/2);
   rect(30,10,pgFunctionViewportWidth-40,pgViewportsHeight-20);
-  
-  //Se dibujan los botones...
+
+  // Dibujar botones
   rectBtn1.display();
   rectBtn2.display();
-  
-  //Se dibuja texto adicional...(labels, etc)
+
+  // Dibujar labels
   lbl1.display();
   lbl2.display();
   lbl3.display();
@@ -132,20 +116,43 @@ void draw() {
   lbl8.display();
   lbl9.display();
   lbl10.display();
-
   if (alert) lbl11.display();
-  
   yVal1.display();
   yVal2.display();
-  yVal3.display();  
+  yVal3.display();
 }
 
-void mouseReleased()
-{
-  //Si se pulsó algún botón y se completa el click, se hace el toggle sobre la etiqueta de alerta...
-  if(prealert)
-  {
-    alert=!alert;
+// Lectura de datos desde Arduino
+void serialEvent(Serial p) {
+  String line = p.readStringUntil('\n');
+  if (line != null) {
+    line = trim(line);
+    if (line.startsWith("LUX:")) {
+      line = line.substring(4); // quitar "LUX:"
+      String[] vals = split(line, ',');
+      if (vals.length == 4) {
+        float lux_actual = float(vals[0]);
+        float lux_max = float(vals[1]);
+        float lux_min = float(vals[2]);
+        float lux_avg = float(vals[3]);
+
+        // Actualizar labels
+        lbl4.caption = nf(lux_actual,1,1) + " LUX";
+        lbl6.caption = nf(lux_max,1,1) + " LUX";
+        lbl8.caption = nf(lux_min,1,1) + " LUX";
+        lbl10.caption = nf(lux_avg,1,1) + " LUX";
+
+        // Actualizar gráficos
+        f1.updateValue(lux_actual);
+        f2.updateValue(lux_avg);
+      }
+    }
+  }
+}
+
+void mouseReleased() {
+  if(prealert) {
+    alert = !alert;
     prealert = false;
   }
 }
