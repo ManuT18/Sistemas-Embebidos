@@ -11,9 +11,15 @@ static const float ldr_R[] = {92000, 41000, 24000, 16000, 10000, 7000, 5000, 100
 static const float ldr_lux[] = {0.5, 1, 3, 6, 10, 15, 35, 80, 100}; 
 
 // Variables para guardar los valores promedio y minimos y maximos historicos
-float min_lux = -1.0f;
-float max_lux = 0.0f;
-float lux_avg = 0.0f;
+static float min_lux = -1.0f;
+static float max_lux = 0.0f;
+static float lux_avg = 0.0f;
+static float lux_percentage = 0.0f;  
+
+float get_min_lux() { return min_lux; }
+float get_max_lux() { return max_lux; }
+float get_lux_avg() { return lux_avg; }
+float get_lux_percentage() { return lux_percentage; }
 
 // Definición del arreglo circular para almacenar los últimos 200 valores de lux
 static float lux_buffer[200];
@@ -100,6 +106,13 @@ static void ldr_adc_callback(uint8_t channel, uint16_t adc_value)
         //Serial.println("pase store_lux_on_buffer ");
 
         recalculate_lux_avg();
+
+        // Calcular porcentaje del rango min-max
+        if (max_lux > min_lux) {
+            lux_percentage = ((lux - min_lux) / (max_lux - min_lux)) * 100.0f;
+        } else {
+            lux_percentage = 0.0f;  // Si min == max, porcentaje 0
+        }
 
         //Serial.println("pase recalculate_lux_avg ");
 

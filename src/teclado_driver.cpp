@@ -75,9 +75,9 @@ void key_down_callback(void (*handler)(), int tecla) {
 }
 
 
-void key_up_callback(void (*handler)(), int tecla) {
-    if (tecla >= 0 && tecla < NUM_KEYS) {
-        handlers[tecla].key_up = handler;
-    }
-}
+// void key_up_callback(void (*handler)(), int tecla) {
+//     if (tecla >= 0 && tecla < NUM_KEYS) {
+//         handlers[tecla].key_up = handler;
+//     }
+// }
 
