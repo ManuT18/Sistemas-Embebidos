@@ -140,16 +140,19 @@ void on_keyboard_down_event(int tecla) {
     {
     case 0: // TECLA RIGHT
         modo_display = MODO_AVG;
+        lcd.clear();
         update_lcd_display();
         break;
     
     case 1: // TECLA UP
         modo_display = MODO_MAX;
+        lcd.clear();
         update_lcd_display();
         break;
 
     case 2: // TECLA DOWN
         modo_display = MODO_MIN;
+        lcd.clear();
         update_lcd_display();
         break;
 
@@ -159,6 +162,7 @@ void on_keyboard_down_event(int tecla) {
 
     case 4: // TECLA SELECT
         modo_display = MODO_NORMAL;
+        lcd.clear();
         update_lcd_display();
         break;
         
