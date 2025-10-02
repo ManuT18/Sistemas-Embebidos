@@ -43,8 +43,6 @@ void setup() {
   rectBtn2 = new RectButton(pgFunctionViewportWidth+10, 60, 60, 40, color(102), color(50), color(255), "B2");
 
   // Inicialización de labels
-  lbl1 = new Label(pgFunctionViewportWidth+10, 5,color(255),"Estado: ");
-  lbl2 = new Label(pgFunctionViewportWidth+70, 5,color(255),"OK");
   lbl3 = new Label(pgFunctionViewportWidth+10,130,color(255),"T.Actual: ");
   lbl4 = new Label(pgFunctionViewportWidth+70,130,color(255),"30 LUX");
   lbl5 = new Label(pgFunctionViewportWidth+10,150,color(255),"T.Max: ");
@@ -55,9 +53,9 @@ void setup() {
   lbl10 = new Label(pgFunctionViewportWidth+70,190,color(255),"30 LUX");
   lbl11 = new Label(pgFunctionViewportWidth+10,210,color(255,0,0),"ALERTA!!!");
 
-  yVal1 = new Label(10,5,color(255),"110");
-  //yVal2 = new Label(10,(pgViewportsHeight-20)/2,color(255),"0");
-  yVal3 = new Label(10,pgViewportsHeight-25,color(255),"-10");
+  yVal1 = new Label(10,5,color(255),"+1");
+  yVal2 = new Label(10,(pgViewportsHeight-20)/2,color(255),"0");
+  yVal3 = new Label(10,pgViewportsHeight-25,color(255),"-1");
 
   // Fuente de la GUI
   myFont = createFont("Arial", 14);
@@ -116,8 +114,6 @@ void draw() {
   rectBtn2.display();
 
   // Dibujar labels
-  lbl1.display();
-  lbl2.display();
   lbl3.display();
   lbl4.display();
   lbl5.display();
