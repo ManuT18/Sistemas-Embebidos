@@ -99,12 +99,29 @@ void loop() {
 
 
 // Callback del LDR (recibe valor de lux)
+
 void on_ldr_update(float lux) {
-    lux_actual = lux;  // Guardar el valor actual
     uint16_t now = millis();
     if (now - last_print >= interval) {
         last_print = now;
+
+        lux_actual = lux;  // actualizar variable global
+
         update_lcd_display();
+
+        // Enviar trama por Serial
+        Serial.print("LUX:");
+        Serial.print(lux_actual);
+        Serial.print(",");
+        Serial.print(get_max_lux());
+        Serial.print(",");
+        Serial.print(get_min_lux());
+        Serial.print(",");
+        Serial.println(get_lux_avg());  // fin de línea con \n
+
+        // Opcional: mostrar en LCD si modo live
+        lcd.setCursor(0, 1);
+        lcd.print("Luz: "); lcd.print(lux_actual); lcd.print(" LUX");
     }
 }
 

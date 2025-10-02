@@ -56,6 +56,7 @@ void update_min_max_from_buffer() {
         if (lux_buffer[i] < min_lux) min_lux = lux_buffer[i];
         if (lux_buffer[i] > max_lux) max_lux = lux_buffer[i];
     }
+
 }
 
 
@@ -114,13 +115,13 @@ static void ldr_adc_callback(uint8_t channel, uint16_t adc_value)
             lux_percentage = 0.0f;  // Si min == max, porcentaje 0
         }
 
-        //Serial.println("pase recalculate_lux_avg ");
+      //  Serial.println("pase recalculate_lux_avg ");
 
         // Serial.print("  Rldr: "); Serial.print(Rldr); 
         // Serial.print("  Lux: "); Serial.print(lux);
-        // Serial.print("      Max: "); Serial.print(max_lux);
-        // Serial.print("      Min: "); Serial.print(min_lux);
-        // Serial.print("      Avg: "); Serial.println(lux_avg);
+         //Serial.print("      Max: "); Serial.print(max_lux);
+         //Serial.print("      Min: "); Serial.print(min_lux);
+         //Serial.print("      Avg: "); Serial.println(lux_avg);
 
         if (ldr_user_callback) {
             ldr_user_callback(lux);
