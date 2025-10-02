@@ -13,6 +13,6 @@ typedef struct {
     adc_callback_t callback;
 } adc_cfg_t;
 
-void adc_init(const adc_cfg_t *cfg);
+bool adc_init(const adc_cfg_t *cfg);
 
 #endif

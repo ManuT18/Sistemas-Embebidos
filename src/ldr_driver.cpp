@@ -9,8 +9,8 @@ static ldr_callback_t ldr_user_callback;
 // Tabla de resistencias y lux para interpolación
 // Tabla ajustada para R_fixed = 1kΩ, basada en mediciones reales
 // Asumiendo: luz baja ~0.5 lux, promedio (7000 ohms) ~50 lux, alta ~100 lux
-static const float ldr_R[] = {2000000, 1100000, 316000, 8900, 6900, 5500, 4500, 3700, 45};
-static const float ldr_lux[] = {0.5, 1, 3, 50, 60, 70, 80, 90, 100}; 
+static const float ldr_R[] = {92000, 41000, 24000, 16000, 10000, 7000, 5000, 1000, 500};
+static const float ldr_lux[] = {0.5, 1, 3, 6, 10, 15, 35, 80, 100}; 
 
 
 static float resistance_to_lux(float R)
@@ -58,5 +58,7 @@ void ldr_init(const ldr_cfg_t *cfg)
     adc_cfg.channel = cfg->channel;
     adc_cfg.callback = ldr_adc_callback;
 
-    adc_init(&adc_cfg);
+    if (!adc_init(&adc_cfg)) {
+        Serial.println("Error al ejecutar inicializacion ADC para LDR");
+    }
 }

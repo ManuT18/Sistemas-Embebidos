@@ -12,19 +12,6 @@
 uint16_t last_print = 0;
 uint16_t interval = 1000; 
 
-// Asignación de callbacks específicos por tecla para key down y key up
-void on_key0_down() { on_keyboard_down_event(0); }
-void on_key1_down() { on_keyboard_down_event(1); }
-void on_key2_down() { on_keyboard_down_event(2); }
-void on_key3_down() { on_keyboard_down_event(3); }
-void on_key4_down() { on_keyboard_down_event(4); }
-
-void on_key0_up() { on_keyboard_up_event(0); }
-void on_key1_up() { on_keyboard_up_event(1); }
-void on_key2_up() { on_keyboard_up_event(2); }
-void on_key3_up() { on_keyboard_up_event(3); }
-void on_key4_up() { on_keyboard_up_event(4); }
-
 // Callback del LDR (recibe valor de lux)
 void on_ldr_update(float lux) {
     uint16_t now = millis();
@@ -50,6 +37,22 @@ void on_keyboard_up_event(int tecla) {
     Serial.println(" soltada");
 }
 
+
+// Asignación de callbacks específicos por tecla para key down y key up
+void on_key0_down() { on_keyboard_down_event(0); }
+void on_key1_down() { on_keyboard_down_event(1); }
+void on_key2_down() { on_keyboard_down_event(2); }
+void on_key3_down() { on_keyboard_down_event(3); }
+void on_key4_down() { on_keyboard_down_event(4); }
+
+void on_key0_up() { on_keyboard_up_event(0); }
+void on_key1_up() { on_keyboard_up_event(1); }
+void on_key2_up() { on_keyboard_up_event(2); }
+void on_key3_up() { on_keyboard_up_event(3); }
+void on_key4_up() { on_keyboard_up_event(4); }
+
+
+
 // --------------------------------------------------
 // Configuraciones globales de los drivers
 // --------------------------------------------------
@@ -60,7 +63,6 @@ unsigned long last_upadate = 0;
 //const unsigned long interval = 500;
 
 void setup() {
-    
 
     // -----------------------------
     // Inicialización del Serial y LCD
@@ -72,6 +74,8 @@ void setup() {
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Iniciado");
+
+    cli(); // deshabilitar interrupciones globales
 
     // -----------------------------
     // Inicialización del LDR
@@ -85,6 +89,13 @@ void setup() {
     // -----------------------------
     keyboard_init();
 
+    // -----------------------------
+    // Inicialización de la cola de funciones
+    // -----------------------------
+    fnqueue_init();
+
+    sei();  // habilitar interrupciones globales
+    
     // Registrar handlers por tecla (0..4) para key down y key up
     key_down_callback(on_key0_down, 0);
     key_down_callback(on_key1_down, 1);
