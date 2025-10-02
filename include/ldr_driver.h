@@ -3,6 +3,11 @@
 #define LDR_H
 #include <stdint.h>
 
+// Variables para guardar los valores promedio y minimos y maximos historicos
+extern float min_lux;
+extern float max_lux;  
+extern float lux_avg;
+
 typedef void (*ldr_callback_t)(float lux);
 
 typedef struct {

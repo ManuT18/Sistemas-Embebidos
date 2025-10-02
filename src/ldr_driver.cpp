@@ -7,14 +7,13 @@
 static ldr_callback_t ldr_user_callback;
 
 // Tabla de resistencias y lux para interpolación
-// Tabla ajustada para R_fixed = 1kΩ, basada en mediciones reales
-// Asumiendo: luz baja ~0.5 lux, promedio (7000 ohms) ~50 lux, alta ~100 lux
 static const float ldr_R[] = {92000, 41000, 24000, 16000, 10000, 7000, 5000, 1000, 500};
 static const float ldr_lux[] = {0.5, 1, 3, 6, 10, 15, 35, 80, 100}; 
 
 // Variables para guardar los valores promedio y minimos y maximos historicos
-static float min_lux = -1.0f;
-static float max_lux = 0.0f;    
+float min_lux = -1.0f;
+float max_lux = 0.0f;
+float lux_avg = 0.0f;
 
 // Definición del arreglo circular para almacenar los últimos 200 valores de lux
 static float lux_buffer[200];
@@ -43,6 +42,17 @@ static float resistance_to_lux(float R)
 }
 
 
+void update_min_max_from_buffer() {
+    min_lux = lux_buffer[0];
+    max_lux = lux_buffer[0];
+
+    for (int i = 1; i < buffer_count; i++) {
+        if (lux_buffer[i] < min_lux) min_lux = lux_buffer[i];
+        if (lux_buffer[i] > max_lux) max_lux = lux_buffer[i];
+    }
+}
+
+
 void store_lux_on_buffer(float lux) {
     // Almacenar el valor de lux en el buffer circular
     lux_buffer[buffer_index] = lux;
@@ -50,34 +60,59 @@ void store_lux_on_buffer(float lux) {
     if (buffer_count < 200) {
         buffer_count++;
     }
+
+    // Actualizar min y max del buffer
+    update_min_max_from_buffer();
 }
 
 
-void save_lux_if_min_or_max(float lux) {
-    if (min_lux == -1.0f) { min_lux = lux; } // Guardar primer valor como minimo
-    if (lux < min_lux) { min_lux = lux; } // Actualizar minimo historico
+void recalculate_lux_avg() {
+    float nuevo_valor = lux_buffer[(buffer_index - 1 + 200) % 200];
+    float sum;
 
-    if (lux > max_lux) { max_lux = lux; } // Actualizar maximo historico
+    if (buffer_count < 200) {
+        // Buffer no lleno
+        sum = lux_avg * (buffer_count - 1) + nuevo_valor;
+    } else {
+        // Buffer lleno: restar el valor saliente y agregar el nuevo
+        float valor_saliente = lux_buffer[buffer_index];
+        sum = lux_avg * buffer_count - valor_saliente + nuevo_valor;
+    }
+
+    lux_avg = sum / buffer_count;
 }
 
 
 static void ldr_adc_callback(uint8_t channel, uint16_t adc_value)
 {
-    float Vadc = (adc_value / 1023.0f) * 5.0f;
-    float R_fixed = 1000.0f;
-    float Rldr = R_fixed * (5.0f / Vadc - 1.0f);
+    if (channel == 1) { // Asegurarse de que es el canal correcto
+    
+        float Vadc = (adc_value / 1023.0f) * 5.0f;
+        float R_fixed = 1000.0f;
+        float Rldr = R_fixed * (5.0f / Vadc - 1.0f);
 
-    float lux = resistance_to_lux(Rldr);
+        float lux = resistance_to_lux(Rldr);
 
-    store_lux_on_buffer(lux);
+        //Serial.println("pase resistance_to_lux ");
 
-    save_lux_if_min_or_max(lux);
+        store_lux_on_buffer(lux);
 
-    // Serial.print("  Rldr: "); Serial.print(Rldr); 
-    // Serial.print("  Lux: "); Serial.println(lux);
+        //Serial.println("pase store_lux_on_buffer ");
 
-    if (ldr_user_callback) {
-        ldr_user_callback(lux);
+        recalculate_lux_avg();
+
+        //Serial.println("pase recalculate_lux_avg ");
+
+        // Serial.print("  Rldr: "); Serial.print(Rldr); 
+        // Serial.print("  Lux: "); Serial.print(lux);
+        // Serial.print("      Max: "); Serial.print(max_lux);
+        // Serial.print("      Min: "); Serial.print(min_lux);
+        // Serial.print("      Avg: "); Serial.println(lux_avg);
+
+        if (ldr_user_callback) {
+            ldr_user_callback(lux);
+        }
+
     }
 }
 

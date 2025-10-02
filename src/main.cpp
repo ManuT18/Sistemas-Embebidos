@@ -99,10 +99,40 @@ void on_ldr_update(float lux) {
     uint16_t now = millis();
     if (now - last_print >= interval) {
         last_print = now;
-        
         lcd.setCursor(0, 1);
         lcd.print("Luz: "); lcd.print(lux); lcd.print(" LUX");
+        Serial.print("Luz: "); Serial.print(lux); Serial.println(" LUX");    
     }
+}
+
+
+void show_max_lux() {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Max Lux:");
+    lcd.setCursor(0, 1);
+    lcd.print(max_lux);
+    lcd.print(" LUX");
+}
+
+
+void show_min_lux() {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Min Lux:");
+    lcd.setCursor(0, 1);
+    lcd.print(min_lux);
+    lcd.print(" LUX");
+}
+
+
+void show_avg_lux() {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Avg Lux:");
+    lcd.setCursor(0, 1);
+    lcd.print(lux_avg);
+    lcd.print(" LUX");
 }
 
 
@@ -110,29 +140,24 @@ void on_ldr_update(float lux) {
 void on_keyboard_down_event(int tecla) {
     switch (tecla)
     {
-    case 0:
-        lcd.setCursor(0, 0);
-        lcd.print("tecla 0");
+    case 0: // TECLA RIGHT
+        show_avg_lux();
         break;
     
-    case 1:
-        lcd.setCursor(0, 0);
-        lcd.print("tecla 1");
+    case 1: // TECLA UP
+        show_max_lux();
         break;
 
-    case 2:
-        lcd.setCursor(0, 0);
-        lcd.print("tecla 2");
+    case 2: // TECLA DOWN
+        show_min_lux();
         break;
 
-    case 3:
-        lcd.setCursor(0, 0);
-        lcd.print("tecla 3");
+    case 3: // TECLA LEFT
+        
         break;
 
-    case 4:
-        lcd.setCursor(0, 0);
-        lcd.print("tecla 4");
+    case 4: // TECLA SELECT
+        
         break;
         
     default:
