@@ -115,13 +115,24 @@ static void ldr_adc_callback(uint8_t channel, uint16_t adc_value)
             lux_percentage = 0.0f;  // Si min == max, porcentaje 0
         }
 
-      //  Serial.println("pase recalculate_lux_avg ");
+        // Serial.println("pase recalculate_lux_avg ");
 
         // Serial.print("  Rldr: "); Serial.print(Rldr); 
         // Serial.print("  Lux: "); Serial.print(lux);
-         //Serial.print("      Max: "); Serial.print(max_lux);
-         //Serial.print("      Min: "); Serial.print(min_lux);
-         //Serial.print("      Avg: "); Serial.println(lux_avg);
+        // Serial.print("      Max: "); Serial.print(max_lux);
+        // Serial.print("      Min: "); Serial.print(min_lux);
+        // Serial.print("      Avg: "); Serial.println(lux_avg);
+
+        // Enviar trama por Serial para monitoreo en app de Processing
+        Serial.print("LUX:");
+        Serial.print(lux);
+        Serial.print(",");
+        Serial.print(get_max_lux());
+        Serial.print(",");
+        Serial.print(get_min_lux());
+        Serial.print(",");
+        Serial.println(get_lux_avg());  // fin de línea con \n
+ 
 
         if (ldr_user_callback) {
             ldr_user_callback(lux);

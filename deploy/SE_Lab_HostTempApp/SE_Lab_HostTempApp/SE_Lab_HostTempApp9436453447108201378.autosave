@@ -43,6 +43,8 @@ void setup() {
   rectBtn2 = new RectButton(pgFunctionViewportWidth+10, 60, 60, 40, color(102), color(50), color(255), "B2");
 
   // Inicialización de labels
+  lbl1 = new Label(pgFunctionViewportWidth+10,110,color(255),"Status: ");
+  lbl2 = new Label(pgFunctionViewportWidth+60,110,color(255),"-");
   lbl3 = new Label(pgFunctionViewportWidth+10,130,color(255),"T.Actual: ");
   lbl4 = new Label(pgFunctionViewportWidth+70,130,color(255),"30 LUX");
   lbl5 = new Label(pgFunctionViewportWidth+10,150,color(255),"T.Max: ");
@@ -61,20 +63,10 @@ void setup() {
   myFont = createFont("Arial", 14);
   textFont(myFont);
 
-  // Inicializar puerto Serial - listar puertos disponibles
-  println("Puertos Serial disponibles:");
-  String[] portList = Serial.list();
-  for (int i = 0; i < portList.length; i++) {
-    println(i + ": " + portList[i]);
-  }
-  // Usar el último puerto disponible (cambiar si es necesario)
-  if (portList.length > 0) {
-    myPort = new Serial(this, portList[portList.length - 1], 9600);
-    myPort.bufferUntil('\n');
-    println("Puerto Serial abierto: " + portList[portList.length - 1]);
-  } else {
-    println("No se encontraron puertos Serial.");
-  }
+  // Inicializar puerto Serial en COM6
+  myPort = new Serial(this, "COM10", 9600);
+  myPort.bufferUntil('\n');
+  println("Puerto Serial abierto: COM10");
 }
 
 void draw() {

@@ -109,16 +109,6 @@ void on_ldr_update(float lux) {
 
         update_lcd_display();
 
-        // Enviar trama por Serial
-        Serial.print("LUX:");
-        Serial.print(lux_actual);
-        Serial.print(",");
-        Serial.print(get_max_lux());
-        Serial.print(",");
-        Serial.print(get_min_lux());
-        Serial.print(",");
-        Serial.println(get_lux_avg());  // fin de línea con \n
-
         // Opcional: mostrar en LCD si modo live
         lcd.setCursor(0, 1);
         lcd.print("Luz: "); lcd.print(lux_actual); lcd.print(" LUX");
