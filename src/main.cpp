@@ -102,6 +102,16 @@ void loop() {
 }
 
 
+// Calculo del promedio de la variable pasada por parametro, en base al minimo y maximo
+int calculate_percentage(float value) {
+    float min_lux = get_min_lux();
+    float max_lux = get_max_lux();
+
+    if (max_lux > min_lux) {
+        return ((value - min_lux) / (max_lux - min_lux)) * 100.0f;
+    } 
+}
+
 // Callback del LDR (recibe valor de lux)
 void on_ldr_update(float lux) {
     uint16_t now = millis();
@@ -114,7 +124,7 @@ void on_ldr_update(float lux) {
             lcd.setCursor(0, 0);
             lcd.print("Midiendo luz");
             lcd.setCursor(0, 1);
-            lcd.print("Luz: "); lcd.print(lux_actual); lcd.print(" LUX");
+            lcd.print(lux_actual); lcd.print(" LUX");
         }
         
         update_lcd_display();
@@ -122,22 +132,24 @@ void on_ldr_update(float lux) {
 }
 
 
+// Función para actualizar el display LCD según el modo actual
 void update_lcd_display() {
     if (modo_display == MODO_AVG) {
         lcd.setCursor(0, 0);
         lcd.print("Avg Lux:");
         lcd.setCursor(0, 1);
-        lcd.print(get_lux_avg());
+        lcd.print(get_lux_avg()); lcd.print(" LUX = ");
+        lcd.print(calculate_percentage(get_lux_avg())); lcd.print("%      ");
     } else if (modo_display == MODO_MAX) {
         lcd.setCursor(0, 0);
         lcd.print("Max Lux:");
         lcd.setCursor(0, 1);
-        lcd.print(get_max_lux());
+        lcd.print(get_max_lux()); lcd.print(" LUX");
     } else if (modo_display == MODO_MIN) {
         lcd.setCursor(0, 0);
         lcd.print("Min Lux:");
         lcd.setCursor(0, 1);
-        lcd.print(get_min_lux());
+        lcd.print(get_min_lux()); lcd.print(" LUX");
     }
 }
 
@@ -146,8 +158,6 @@ void update_lcd_display() {
 void process_serial_commands() {
     if (Serial.available()) {
         char c = Serial.read();
-        Serial.print("Comando recibido: ");
-        Serial.println(c);
 
         // Cambiar modo según el comando
         if (c == '1') {
