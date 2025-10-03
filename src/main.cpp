@@ -106,11 +106,12 @@ void on_ldr_update(float lux) {
 
         lux_actual = lux;  // actualizar variable global
 
+        if (modo_display == MODO_NORMAL) {
+            lcd.setCursor(0, 1);
+            lcd.print("Luz: "); lcd.print(lux_actual); lcd.print(" LUX");
+        }
+        
         update_lcd_display();
-
-        // Opcional: mostrar en LCD si modo live
-        lcd.setCursor(0, 1);
-        lcd.print("Luz: "); lcd.print(lux_actual); lcd.print(" LUX");
     }
 }
 

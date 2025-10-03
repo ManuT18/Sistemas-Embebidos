@@ -34,7 +34,7 @@ static void keyboard_adc_callback(uint8_t channel, uint16_t adc_value) {
     tecla_actual = get_key(adc_value);
 
     db_counter++;
-    if (db_counter >= 150) {  // anti-rebote
+    if (db_counter >= 100) {  // anti-rebote
         db_counter = 0;
 
         if (tecla_actual != last_key) {
