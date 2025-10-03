@@ -1,5 +1,5 @@
 /**
- * Clase que define un graficador de funciones que hace scroll horizontal en el tiempo.
+ * Clase que define un graficado que hace scroll horizontal en el tiempo.
  * Permite definir un conjunto arbitrario de funciones y plotearlas en el mismo gráfico.
  * El scroll del gráfico es controlado por las modificaciones a los valores del mismo (si no
  * se producen actualizaciones en los valores de las funciones, el gráfico no se desplaza).
@@ -36,18 +36,13 @@ class ScrollingFcnPlot
   
   void displayIntoRect(int x1,int y1,int x2,int y2)
   {
-    if (mustScroll)
-    {
-      mustScroll = false;
-      
-      strokeWeight(2);
-      stroke(colorF);
-      
-      beginShape();
-      for(int i = 0; i<f.length;i++){
-        vertex(map(i,0,cantValues,x1,x2),map(f[(fPtr+i)%cantValues], minVal, maxVal, y2, y1));
-      }
-      endShape();
-    }  
+    strokeWeight(2);
+    stroke(colorF);
+    
+    beginShape();
+    for(int i = 0; i<f.length;i++){
+      vertex(map(i,0,cantValues,x1,x2),map(f[(fPtr+i)%cantValues], minVal, maxVal, y2, y1));
+    }
+    endShape();
   }
 }
