@@ -89,41 +89,30 @@ void recalculate_lux_avg() {
     lux_avg = sum / buffer_count;
 }
 
+static unsigned long lastSerialTime = 0;
+const unsigned long serialInterval = 100; // enviar cada 100 ms
 
 static void ldr_adc_callback(uint8_t channel, uint16_t adc_value)
 {
-    if (channel == 1) { // Asegurarse de que es el canal correcto
-    
-        float Vadc = (adc_value / 1023.0f) * 5.0f;
-        float R_fixed = 1000.0f;
-        float Rldr = R_fixed * (5.0f / Vadc - 1.0f);
+    if (channel != 1) return;
 
-        float lux = resistance_to_lux(Rldr);
+    float Vadc = (adc_value / 1023.0f) * 5.0f;
+    float R_fixed = 1000.0f;
+    float Rldr = R_fixed * (5.0f / Vadc - 1.0f);
+    float lux = resistance_to_lux(Rldr);
 
-        //Serial.println("pase resistance_to_lux ");
+    store_lux_on_buffer(lux);
+    recalculate_lux_avg();
 
-        store_lux_on_buffer(lux);
+    if (max_lux > min_lux)
+        lux_percentage = ((lux - min_lux) / (max_lux - min_lux)) * 100.0f;
+    else
+        lux_percentage = 0.0f;
 
-        //Serial.println("pase store_lux_on_buffer ");
-
-        recalculate_lux_avg();
-
-        // Calcular porcentaje del rango min-max
-        if (max_lux > min_lux) {
-            lux_percentage = ((lux - min_lux) / (max_lux - min_lux)) * 100.0f;
-        } else {
-            lux_percentage = 0.0f;  // Si min == max, porcentaje 0
-        }
-
-        // Serial.println("pase recalculate_lux_avg ");
-
-        // Serial.print("  Rldr: "); Serial.print(Rldr); 
-        // Serial.print("  Lux: "); Serial.print(lux);
-        // Serial.print("      Max: "); Serial.print(max_lux);
-        // Serial.print("      Min: "); Serial.print(min_lux);
-        // Serial.print("      Avg: "); Serial.println(lux_avg);
-
-        // Enviar trama por Serial para monitoreo en app de Processing
+    // Solo enviar Serial cada 100 ms
+    unsigned long now = millis();
+    if (now - lastSerialTime >= serialInterval) {
+        lastSerialTime = now;
         Serial.print("LUX:");
         Serial.print(lux);
         Serial.print(",");
@@ -131,15 +120,14 @@ static void ldr_adc_callback(uint8_t channel, uint16_t adc_value)
         Serial.print(",");
         Serial.print(get_min_lux());
         Serial.print(",");
-        Serial.println(get_lux_avg());  // fin de línea con \n
- 
+        Serial.println(get_lux_avg());
+    }
 
-        if (ldr_user_callback) {
-            ldr_user_callback(lux);
-        }
-
+    if (ldr_user_callback) {
+        ldr_user_callback(lux);
     }
 }
+
 
 
 void ldr_init(const ldr_cfg_t *cfg)
