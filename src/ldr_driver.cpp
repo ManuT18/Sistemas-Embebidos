@@ -132,7 +132,6 @@ static void ldr_adc_callback(uint8_t channel, uint16_t adc_value)
         Serial.print(get_min_lux());
         Serial.print(",");
         Serial.println(get_lux_avg());  // fin de línea con \n
- 
 
         if (ldr_user_callback) {
             ldr_user_callback(lux);

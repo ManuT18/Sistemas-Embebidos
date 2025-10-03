@@ -22,6 +22,7 @@ static void adc_handler(void);
 // Variable para evitar inicialización múltiple
 static bool inicializado = false;
 
+
 // ISR del timer para iniciar conversiones ADC cada 75 ms (LDR, canal 1)
 ISR(TIMER1_COMPA_vect)
 {
@@ -32,6 +33,7 @@ ISR(TIMER1_COMPA_vect)
     }
 }
 
+
 // ISR del timer para iniciar conversiones ADC cada 10 ms (teclado, canal 0)
 ISR(TIMER2_COMPA_vect)
 {
@@ -41,6 +43,17 @@ ISR(TIMER2_COMPA_vect)
         ADCSRA |= (1 << ADSC);
     }
 }
+
+
+ISR(ADC_vect)
+{
+    // Leer valor ADC
+    adc_values[canal_actual] = ADC;
+
+    // Encolar handler fuera de ISR
+    fnqueue_add(adc_handler);
+}
+
 
 bool adc_init(const adc_cfg_t *cfg)
 {
@@ -73,21 +86,9 @@ bool adc_init(const adc_cfg_t *cfg)
         TCCR2B = (1 << CS22) | (1 << CS21) | (1 << CS20);  // Prescaler 1024
         OCR2A = 155;  // (0.01 * 16000000 / 1024) - 1 ≈ 155
         TIMSK2 = (1 << OCIE2A);  // Habilitar interrupción en compare match
-
-        // No iniciar conversión inicial aquí; los timers lo harán
     }
         
     return true;
-}
-
-
-ISR(ADC_vect)
-{
-    // Leer valor ADC
-    adc_values[canal_actual] = ADC;
-
-    // Encolar handler fuera de ISR
-    fnqueue_add(adc_handler);
 }
 
 
@@ -100,6 +101,4 @@ static void adc_handler(void)
         adc_channels[canal_actual_aux](canal_actual_aux, adc_values[canal_actual_aux]);
         critical_end();
     }
-
-    // No iniciar conversión aquí; los timers lo harán
 }

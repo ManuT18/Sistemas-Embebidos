@@ -15,6 +15,7 @@
 void on_ldr_update(float lux);
 void on_keyboard_down_event(int tecla);
 void update_lcd_display();
+void process_serial_commands();
 // void on_keyboard_up_event(int tecla);
 
 // Asignación de callbacks específicos por tecla para key down y key up
@@ -39,7 +40,7 @@ ldr_cfg_t ldr_conf;
 float lux_actual = 0;
 unsigned long last_upadate = 0;
 uint16_t last_print = 0;
-uint16_t interval = 400;  // Intervalo de impresión en ms
+uint16_t interval = 100;  // Intervalo de impresión en ms
 enum { MODO_NORMAL = 0, MODO_AVG = 1, MODO_MAX = 2, MODO_MIN = 3 };
 int modo_display = MODO_NORMAL;
 
@@ -74,6 +75,9 @@ void setup() {
     // -------------------
     fnqueue_init();
 
+    // Encolar la función de procesamiento de comandos seriales
+    fnqueue_add(process_serial_commands);
+
     sei();  // habilitar interrupciones globales
     
     // Registrar handlers por tecla (0..4) para key down y key up
@@ -107,6 +111,8 @@ void on_ldr_update(float lux) {
         lux_actual = lux;  // actualizar variable global
 
         if (modo_display == MODO_NORMAL) {
+            lcd.setCursor(0, 0);
+            lcd.print("Midiendo luz");
             lcd.setCursor(0, 1);
             lcd.print("Luz: "); lcd.print(lux_actual); lcd.print(" LUX");
         }
@@ -117,12 +123,7 @@ void on_ldr_update(float lux) {
 
 
 void update_lcd_display() {
-    if (modo_display == MODO_NORMAL) {
-        lcd.setCursor(0, 0);
-        lcd.print("Midiendo luz");
-        lcd.setCursor(0, 1);
-        lcd.print("Lux:"); lcd.print(lux_actual);
-    } else if (modo_display == MODO_AVG) {
+    if (modo_display == MODO_AVG) {
         lcd.setCursor(0, 0);
         lcd.print("Avg Lux:");
         lcd.setCursor(0, 1);
@@ -138,6 +139,36 @@ void update_lcd_display() {
         lcd.setCursor(0, 1);
         lcd.print(get_min_lux());
     }
+}
+
+
+// Función para procesar comandos del host por Serial
+void process_serial_commands() {
+    if (Serial.available()) {
+        char c = Serial.read();
+        Serial.print("Comando recibido: ");
+        Serial.println(c);
+
+        // Cambiar modo según el comando
+        if (c == '1') {
+            modo_display = MODO_NORMAL;
+        } else if (c == '2') {
+            modo_display = MODO_MAX;
+        } else if (c == '3') {
+            modo_display = MODO_MIN;
+        } else if (c == '4') {
+            modo_display = MODO_AVG;
+        }
+
+        // Actualizar LCD inmediatamente
+        lcd.clear();
+        update_lcd_display();
+
+        
+    }
+
+    // Re-encolar la función para que se ejecute nuevamente
+    fnqueue_add(process_serial_commands);
 }
 
 
