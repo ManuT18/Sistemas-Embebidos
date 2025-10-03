@@ -40,6 +40,7 @@ class ScrollingFcnPlot
     {
       mustScroll = false;
       
+      strokeWeight(2);
       stroke(colorF);
       
       beginShape();

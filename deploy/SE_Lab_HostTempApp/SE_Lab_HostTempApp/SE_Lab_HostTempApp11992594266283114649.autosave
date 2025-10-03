@@ -17,9 +17,8 @@ RectButton rectBtn1, rectBtn2, rectBtn3, rectBtn4;
 PFont myFont;
 
 // Modo de gráfico
-int modo_grafico = 0; // 0: todos, 1: medicion, 2: max, 3: min, 4: prom
+int modo_grafico = 0; // 0: medicion, 1: max, 2: min, 3: prom, 4: todos
 int ultimo_boton = -1;
-boolean buttonPressed = false;
 
 // Etiquetas textuales...
 Label lbl1, lbl2, lbl3, lbl4, lbl5, lbl6, lbl7, lbl8, lbl9, lbl10;
@@ -34,12 +33,12 @@ int pgViewportsHeight = 240;
 Serial myPort;
 
 void setup() {
-  size(680, 250);
+  size(680, 480);
 
   // Inicialización de gráficos
   cantValues = pgFunctionViewportWidth;
   f1 = new ScrollingFcnPlot(cantValues, color(100,0,0), -10, 110);
-  f2 = new ScrollingFcnPlot(cantValues, color(0,100,0), -10, 110);
+  f2 = new ScrollingFcnPlot(cantValues, color(0,100,0), 0, height);
   f3 = new ScrollingFcnPlot(cantValues, color(0,0,100), -10, 110);
   f4 = new ScrollingFcnPlot(cantValues, color(100,100,0), -10, 110);
 
@@ -50,18 +49,18 @@ void setup() {
   rectBtn4 = new RectButton(pgFunctionViewportWidth+100, 100, 80, 40, color(102), color(50), color(255), "PROM");
 
   // Inicialización de labels
-  lbl1 = new Label(pgFunctionViewportWidth+10,    15,   color(255),       "MOSTRANDO: ");
-  lbl2 = new Label(pgFunctionViewportWidth+115,   15,   color(255),       "TODOS");
-  lbl3 = new Label(pgFunctionViewportWidth+10,    150,  color(100,0,0),   "T.Actual: ");
-  lbl4 = new Label(pgFunctionViewportWidth+70,    150,  color(100,0,0),   "30 LUX");
-  lbl5 = new Label(pgFunctionViewportWidth+10,    170,  color(0,0,100),   "T.Max: ");
-  lbl6 = new Label(pgFunctionViewportWidth+70,    170,  color(0,0,100),   "30 LUX");
-  lbl7 = new Label(pgFunctionViewportWidth+10,    190,  color(100,100,0), "T.Min: ");
-  lbl8 = new Label(pgFunctionViewportWidth+70,    190,  color(100,100,0), "30 LUX");
-  lbl9 = new Label(pgFunctionViewportWidth+10,    210,  color(0,100,0),   "T.Prom: ");
-  lbl10 = new Label(pgFunctionViewportWidth+70,   210,  color(0,100,0),   "30 LUX");
+  lbl1 = new Label(pgFunctionViewportWidth+10, 25,color(255),"MOSTRANDO: ");
+  lbl2 = new Label(pgFunctionViewportWidth+115, 25,color(255),"TODOS");
+  lbl3 = new Label(pgFunctionViewportWidth+10,160,color(100,0,0),"T.Actual: ");
+  lbl4 = new Label(pgFunctionViewportWidth+70,160,color(100,0,0),"30 LUX");
+  lbl5 = new Label(pgFunctionViewportWidth+10,180,color(0,0,100),"T.Max: ");
+  lbl6 = new Label(pgFunctionViewportWidth+70,180,color(0,0,100),"30 LUX");
+  lbl7 = new Label(pgFunctionViewportWidth+10,200,color(100,100,0),"T.Min: ");
+  lbl8 = new Label(pgFunctionViewportWidth+70,200,color(100,100,0),"30 LUX");
+  lbl9 = new Label(pgFunctionViewportWidth+10,220,color(0,100,0),"T.Prom: ");
+  lbl10 = new Label(pgFunctionViewportWidth+70,220,color(0,100,0),"30 LUX");
 
-  yVal1 = new Label(5,5,color(255),"110");
+  yVal1 = new Label(10,5,color(255),"110");
   //yVal2 = new Label(10,(pgViewportsHeight-20)/2,color(255),"0");
   yVal3 = new Label(10,pgViewportsHeight-25,color(255),"0");
 
@@ -83,18 +82,18 @@ void draw() {
   // Dibuja las funciones
   if (modo_grafico == 0) {
     f1.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
-    f2.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
-    f3.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
-    f4.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
   } else if (modo_grafico == 1) {
-    f1.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
-  } else if (modo_grafico == 2) {
     f3.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
-  } else if (modo_grafico == 3) {
+  } else if (modo_grafico == 2) {
     f4.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
-  } else if (modo_grafico == 4) {
+  } else if (modo_grafico == 3) {
     f2.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
-  } 
+  } else if (modo_grafico == 4) {
+    f1.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
+    f2.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
+    f3.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
+    f4.displayIntoRect(30,10,pgFunctionViewportWidth-10,pgViewportsHeight-10);
+  }
 
   // Procesa eventos de MouseOver
   rectBtn1.update();
@@ -103,15 +102,14 @@ void draw() {
   rectBtn4.update();
 
   // Procesa las entradas (botones)
-  if(mousePressed && !buttonPressed) {
-    buttonPressed = true;
+  if(mousePressed) {
     if(rectBtn1.pressed()) {
       rectBtn1.currentcolor = color(102);
       if (ultimo_boton == 1) {
-        modo_grafico = 0;
+        modo_grafico = 4;
         lbl2.caption = "TODOS";
       } else {
-        modo_grafico = 1;
+        modo_grafico = 0;
         lbl2.caption = "MEDICION";
       }
       ultimo_boton = 1;
@@ -119,10 +117,10 @@ void draw() {
     else if(rectBtn2.pressed()) {
       rectBtn2.currentcolor = color(102);
       if (ultimo_boton == 2) {
-        modo_grafico = 0;
+        modo_grafico = 4;
         lbl2.caption = "TODOS";
       } else {
-        modo_grafico = 2;
+        modo_grafico = 1;
         lbl2.caption = "MAX";
       }
       ultimo_boton = 2;
@@ -130,10 +128,10 @@ void draw() {
     else if(rectBtn3.pressed()) {
       rectBtn3.currentcolor = color(102);
       if (ultimo_boton == 3) {
-        modo_grafico = 0;
+        modo_grafico = 4;
         lbl2.caption = "TODOS";
       } else {
-        modo_grafico = 3;
+        modo_grafico = 2;
         lbl2.caption = "MIN";
       }
       ultimo_boton = 3;
@@ -141,10 +139,10 @@ void draw() {
     else if(rectBtn4.pressed()) {
       rectBtn4.currentcolor = color(102);
       if (ultimo_boton == 4) {
-        modo_grafico = 0;
+        modo_grafico = 4;
         lbl2.caption = "TODOS";
       } else {
-        modo_grafico = 4;
+        modo_grafico = 3;
         lbl2.caption = "PROM";
       }
       ultimo_boton = 4;
@@ -208,8 +206,4 @@ void serialEvent(Serial p) {
 }
 
 void mouseReleased() {
-  buttonPressed = false;
 }
-
-
-
