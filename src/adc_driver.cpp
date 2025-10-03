@@ -22,6 +22,25 @@ static void adc_handler(void);
 // Variable para evitar inicialización múltiple
 static bool inicializado = false;
 
+// ISR del timer para iniciar conversiones ADC cada 75 ms (LDR, canal 1)
+ISR(TIMER1_COMPA_vect)
+{
+    if (!(ADCSRA & (1 << ADSC))) {  // Solo iniciar si no hay conversión en curso
+        canal_actual = 1;
+        ADMUX = (ADMUX & 0xF0) | (canal_actual & 0x0F);
+        ADCSRA |= (1 << ADSC);
+    }
+}
+
+// ISR del timer para iniciar conversiones ADC cada 10 ms (teclado, canal 0)
+ISR(TIMER2_COMPA_vect)
+{
+    if (!(ADCSRA & (1 << ADSC))) {  // Solo iniciar si no hay conversión en curso
+        canal_actual = 0;
+        ADMUX = (ADMUX & 0xF0) | (canal_actual & 0x0F);
+        ADCSRA |= (1 << ADSC);
+    }
+}
 
 bool adc_init(const adc_cfg_t *cfg)
 {
@@ -43,9 +62,19 @@ bool adc_init(const adc_cfg_t *cfg)
         // Prescaler 128 → 125 kHz para Arduino UNO
         ADCSRA = (1 << ADEN) | (1 << ADIE) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
 
-        // Iniciar primera conversión en canal 0
-        ADMUX = (ADMUX & 0xF0) | (canal_actual & 0x0F);
-        ADCSRA |= (1 << ADSC);
+        // Configurar Timer1 para interrumpir cada 75 ms (LDR, canal 1)
+        TCCR1A = 0;  // Normal mode
+        TCCR1B = (1 << WGM12) | (1 << CS12) | (1 << CS10);  // CTC, prescaler 1024
+        OCR1A = 1156;  // (0.075 * 16000000 / 1024) - 1 ≈ 1156
+        TIMSK1 = (1 << OCIE1A);  // Habilitar interrupción en compare match
+
+        // Configurar Timer2 para interrumpir cada 10 ms (teclado, canal 0)
+        TCCR2A = (1 << WGM21);  // CTC mode
+        TCCR2B = (1 << CS22) | (1 << CS21) | (1 << CS20);  // Prescaler 1024
+        OCR2A = 155;  // (0.01 * 16000000 / 1024) - 1 ≈ 155
+        TIMSK2 = (1 << OCIE2A);  // Habilitar interrupción en compare match
+
+        // No iniciar conversión inicial aquí; los timers lo harán
     }
         
     return true;
@@ -72,20 +101,5 @@ static void adc_handler(void)
         critical_end();
     }
 
-    // Round-robin: buscar próximo canal activo
-    uint8_t siguiente = canal_actual;
-    for(uint8_t i=0; i<ADC_MAX_CHANNELS; i++)
-    {
-        siguiente = (siguiente + 1) % ADC_MAX_CHANNELS;
-        if(canal_activo[siguiente])
-        {
-            canal_actual = siguiente;
-            break;
-        }
-    }
-
-    // Iniciar conversión en próximo canal
-    ADMUX = (ADMUX & 0xF0) | (canal_actual & 0x0F);
-    ADCSRA |= (1 << ADSC);
+    // No iniciar conversión aquí; los timers lo harán
 }
-

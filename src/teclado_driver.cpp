@@ -49,6 +49,8 @@ static void keyboard_adc_callback(uint8_t channel, uint16_t adc_value) {
             
             last_key = tecla_actual;
         }
+
+        
     }
 }
 

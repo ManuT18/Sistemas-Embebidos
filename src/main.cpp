@@ -39,7 +39,7 @@ ldr_cfg_t ldr_conf;
 float lux_actual = 0;
 unsigned long last_upadate = 0;
 uint16_t last_print = 0;
-uint16_t interval = 75;  // Intervalo de impresión en ms
+uint16_t interval = 400;  // Intervalo de impresión en ms
 enum { MODO_NORMAL = 0, MODO_AVG = 1, MODO_MAX = 2, MODO_MIN = 3 };
 int modo_display = MODO_NORMAL;
 
@@ -94,12 +94,11 @@ void setup() {
 void loop() {
 
     fnqueue_run();
-
+    
 }
 
 
 // Callback del LDR (recibe valor de lux)
-
 void on_ldr_update(float lux) {
     uint16_t now = millis();
     if (now - last_print >= interval) {
