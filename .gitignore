@@ -1,0 +1,56 @@
+﻿# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+.clangd/
+*.sconsign*
+project.checksum
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Build artifacts & Binaries
+*.elf
+*.bin
+*.hex
+*.o
+*.a
+*.so
+*.obj
+*.exe
+*.out
+*.app
+*.zip
+*.tar.gz
+*.7z
+*.d
+
+# Intel / Altera Quartus Prime & Nios II
+db/
+incremental_db/
+output_files/
+obj/
+*.rpt
+*.done
+*.summary
+*.sof
+*.pof
+*.pin
+*.qws
+*.smsg
+
+# ESP-IDF
+build/
+sdkconfig.old
+
+# OS / Editor temporary files
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*~
